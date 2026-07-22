@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const API_URL = "http://hospital-erp-1-bsh6.onrender.com/appointments";
-  
+const API_URL = "https://hospital-erp-1-bsh6.onrender.com/appointments";
+
 // ADMIN - GET ALL APPOINTMENTS
 export const getAppointments = () =>
   axios.get(API_URL);
