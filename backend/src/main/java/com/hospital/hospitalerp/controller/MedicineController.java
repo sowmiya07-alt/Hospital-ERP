@@ -9,7 +9,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/medicines")
-@CrossOrigin(origins = "http://localhost:3000")
 public class MedicineController {
 
     @Autowired
@@ -34,6 +33,16 @@ public class MedicineController {
     public Medicine updateMedicine(@PathVariable Long id,
                                    @RequestBody Medicine medicine) {
         return medicineService.updateMedicine(id, medicine);
+    }
+
+    @GetMapping("/low-stock")
+    public List<Medicine> getLowStockMedicines() {
+        return medicineService.getLowStockMedicines();
+    }
+
+    @PostMapping("/{id}/dispense")
+    public Medicine dispenseMedicine(@PathVariable Long id, @RequestParam Integer quantity) {
+        return medicineService.dispenseMedicine(id, quantity);
     }
 
     @DeleteMapping("/{id}")

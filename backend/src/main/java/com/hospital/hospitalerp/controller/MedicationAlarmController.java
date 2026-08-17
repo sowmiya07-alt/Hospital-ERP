@@ -11,7 +11,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/medication-alarms")
-@CrossOrigin(origins = "http://localhost:3000")
 public class MedicationAlarmController {
 
     @Autowired

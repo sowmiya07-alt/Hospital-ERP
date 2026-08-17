@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Sidebar from "../components/Sidebar";
 
 import {
@@ -8,392 +8,375 @@ import {
   deleteDoctor,
 } from "../services/doctorService";
 
+import { getDepartments } from "../services/departmentService";
+
 function Doctors() {
   const [doctors, setDoctors] = useState([]);
+  const [departments, setDepartments] = useState([]);
 
   const [search, setSearch] = useState("");
-  const [specializationFilter, setSpecializationFilter] =
-    useState("All");
+  const [specializationFilter, setSpecializationFilter] = useState("All");
 
   const [doctor, setDoctor] = useState({
     name: "",
     specialization: "",
+    qualification: "",
     phone: "",
     email: "",
     experience: "",
+    consultationFee: "50",
+    departmentId: "",
   });
 
   const [editingId, setEditingId] = useState(null);
 
-  useEffect(() => {
-    loadDoctors();
-  }, []);
-
-  // LOAD DOCTORS
-  const loadDoctors = () => {
+  const loadDoctors = useCallback(() => {
     getDoctors()
       .then((response) => {
-        setDoctors(response.data);
+        setDoctors(response.data || []);
       })
       .catch((error) => {
         console.log("Doctor Load Error:", error);
       });
-  };
+  }, []);
 
-  // RESET FORM
+  const loadDepartments = useCallback(() => {
+    getDepartments()
+      .then((response) => {
+        setDepartments(response.data || []);
+      })
+      .catch((error) => {
+        console.log("Department Load Error:", error);
+      });
+  }, []);
+
+  useEffect(() => {
+    loadDoctors();
+    loadDepartments();
+  }, [loadDoctors, loadDepartments]);
+
   const resetForm = () => {
     setDoctor({
       name: "",
       specialization: "",
+      qualification: "",
       phone: "",
       email: "",
       experience: "",
+      consultationFee: "50",
+      departmentId: "",
     });
-
     setEditingId(null);
   };
 
-  // SAVE / UPDATE
   const saveDoctor = () => {
-    if (
-      !doctor.name ||
-      !doctor.specialization ||
-      !doctor.phone ||
-      !doctor.email ||
-      doctor.experience === ""
-    ) {
-      alert("Please fill all doctor details");
+    if (!doctor.name || !doctor.specialization || !doctor.phone) {
+      alert("Please enter doctor name, specialization, and contact phone.");
       return;
     }
 
     const doctorData = {
       ...doctor,
-      experience: Number(doctor.experience),
+      experience: doctor.experience ? Number(doctor.experience) : 0,
+      consultationFee: doctor.consultationFee ? Number(doctor.consultationFee) : 50.0,
+      department: doctor.departmentId ? { id: Number(doctor.departmentId) } : null,
     };
 
     if (editingId === null) {
       addDoctor(doctorData)
         .then(() => {
-          alert("Doctor Saved Successfully");
-
+          alert("Doctor Profile Created Successfully");
           loadDoctors();
           resetForm();
         })
         .catch((error) => {
           console.log("Save Doctor Error:", error);
-          console.log(
-            "Backend Response:",
-            error.response?.data
-          );
-
           alert("Unable to Save Doctor");
         });
     } else {
       updateDoctor(editingId, doctorData)
         .then(() => {
-          alert("Doctor Updated Successfully");
-
+          alert("Doctor Profile Updated Successfully");
           loadDoctors();
           resetForm();
         })
         .catch((error) => {
           console.log("Update Doctor Error:", error);
-
           alert("Unable to Update Doctor");
         });
     }
   };
 
-  // EDIT
   const editDoctor = (d) => {
     setDoctor({
       name: d.name || "",
       specialization: d.specialization || "",
+      qualification: d.qualification || "",
       phone: d.phone || "",
       email: d.email || "",
       experience: d.experience ?? "",
+      consultationFee: d.consultationFee ?? "50",
+      departmentId: d.department?.id || "",
     });
-
     setEditingId(d.id);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // DELETE
   const removeDoctor = (id) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this doctor?"
-      )
-    ) {
+    if (window.confirm("Are you sure you want to delete this doctor record?")) {
       deleteDoctor(id)
         .then(() => {
-          alert("Doctor Deleted Successfully");
-
+          alert("Doctor Record Deleted Successfully");
           loadDoctors();
-
-          if (editingId === id) {
-            resetForm();
-          }
+          if (editingId === id) resetForm();
         })
         .catch((error) => {
           console.log("Delete Doctor Error:", error);
-
           alert("Unable to Delete Doctor");
         });
     }
   };
 
-  // CREATE SPECIALIZATION LIST
   const specializations = [
-    ...new Set(
-      doctors
-        .map((d) => d.specialization)
-        .filter(Boolean)
-    ),
+    ...new Set(doctors.map((d) => d.specialization).filter(Boolean)),
   ];
 
-  // SEARCH + FILTER
   const filteredDoctors = doctors.filter((d) => {
-    const searchText = search.toLowerCase();
-
+    const text = search.toLowerCase();
     const matchesSearch =
-      (d.name || "")
-        .toLowerCase()
-        .includes(searchText) ||
-      (d.specialization || "")
-        .toLowerCase()
-        .includes(searchText) ||
-      (d.phone || "")
-        .toLowerCase()
-        .includes(searchText) ||
-      (d.email || "")
-        .toLowerCase()
-        .includes(searchText) ||
-      String(d.experience ?? "").includes(searchText);
+      (d.name || "").toLowerCase().includes(text) ||
+      (d.specialization || "").toLowerCase().includes(text) ||
+      (d.phone || "").toLowerCase().includes(text) ||
+      (d.email || "").toLowerCase().includes(text);
 
-    const matchesSpecialization =
-      specializationFilter === "All" ||
-      d.specialization === specializationFilter;
+    const matchesSpec =
+      specializationFilter === "All" || d.specialization === specializationFilter;
 
-    return matchesSearch && matchesSpecialization;
+    return matchesSearch && matchesSpec;
   });
 
   return (
     <div className="d-flex">
       <Sidebar />
 
-      <div className="container p-4">
-        <h2 className="mb-4">
-          Doctor Management
-        </h2>
+      <div className="container-fluid p-4">
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h2>👨‍⚕️ Doctor Management</h2>
+            <p className="text-muted mb-0">Register medical staff, set consultation fees, and assign departments</p>
+          </div>
+          <span className="badge bg-primary fs-6">Active Doctors: {doctors.length}</span>
+        </div>
 
         {/* DOCTOR FORM */}
+        <div className="card shadow mb-4">
+          <div className="card-header bg-dark text-white fw-bold">
+            {editingId === null ? "➕ Register New Doctor" : "✏️ Edit Doctor Profile"}
+          </div>
+          <div className="card-body">
+            <div className="row g-3">
+              <div className="col-md-4">
+                <label className="form-label fw-bold">Doctor Full Name *</label>
+                <input
+                  className="form-control"
+                  placeholder="e.g. Dr. Sarah Jenkins"
+                  value={doctor.name}
+                  onChange={(e) => setDoctor({ ...doctor, name: e.target.value })}
+                />
+              </div>
 
-        <div className="card shadow p-4 mb-4">
-          <input
-            className="form-control mb-2"
-            placeholder="Doctor Name"
-            value={doctor.name}
-            onChange={(e) =>
-              setDoctor({
-                ...doctor,
-                name: e.target.value,
-              })
-            }
-          />
+              <div className="col-md-4">
+                <label className="form-label fw-bold">Specialization *</label>
+                <input
+                  className="form-control"
+                  placeholder="e.g. Cardiology"
+                  value={doctor.specialization}
+                  onChange={(e) => setDoctor({ ...doctor, specialization: e.target.value })}
+                />
+              </div>
 
-          <input
-            className="form-control mb-2"
-            placeholder="Specialization"
-            value={doctor.specialization}
-            onChange={(e) =>
-              setDoctor({
-                ...doctor,
-                specialization: e.target.value,
-              })
-            }
-          />
+              <div className="col-md-4">
+                <label className="form-label fw-bold">Qualifications</label>
+                <input
+                  className="form-control"
+                  placeholder="e.g. MBBS, MD, FACC"
+                  value={doctor.qualification}
+                  onChange={(e) => setDoctor({ ...doctor, qualification: e.target.value })}
+                />
+              </div>
 
-          <input
-            className="form-control mb-2"
-            placeholder="Phone"
-            value={doctor.phone}
-            onChange={(e) =>
-              setDoctor({
-                ...doctor,
-                phone: e.target.value,
-              })
-            }
-          />
+              <div className="col-md-4">
+                <label className="form-label fw-bold">Department</label>
+                <select
+                  className="form-select"
+                  value={doctor.departmentId}
+                  onChange={(e) => setDoctor({ ...doctor, departmentId: e.target.value })}
+                >
+                  <option value="">Select Department</option>
+                  {departments.map((dept) => (
+                    <option key={dept.id} value={dept.id}>
+                      {dept.name} ({dept.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          <input
-            type="email"
-            className="form-control mb-2"
-            placeholder="Email"
-            value={doctor.email}
-            onChange={(e) =>
-              setDoctor({
-                ...doctor,
-                email: e.target.value,
-              })
-            }
-          />
+              <div className="col-md-4">
+                <label className="form-label fw-bold">Phone Number *</label>
+                <input
+                  className="form-control"
+                  placeholder="+1-555-0192"
+                  value={doctor.phone}
+                  onChange={(e) => setDoctor({ ...doctor, phone: e.target.value })}
+                />
+              </div>
 
-          <input
-            type="number"
-            min="0"
-            className="form-control mb-3"
-            placeholder="Experience (Years)"
-            value={doctor.experience}
-            onChange={(e) =>
-              setDoctor({
-                ...doctor,
-                experience: e.target.value,
-              })
-            }
-          />
+              <div className="col-md-4">
+                <label className="form-label fw-bold">Email Address</label>
+                <input
+                  type="email"
+                  className="form-control"
+                  placeholder="doctor@hospital.org"
+                  value={doctor.email}
+                  onChange={(e) => setDoctor({ ...doctor, email: e.target.value })}
+                />
+              </div>
 
-          <div>
-            <button
-              className={`btn ${
-                editingId === null
-                  ? "btn-success"
-                  : "btn-warning"
-              }`}
-              onClick={saveDoctor}
-            >
-              {editingId === null
-                ? "Save Doctor"
-                : "Update Doctor"}
-            </button>
+              <div className="col-md-6">
+                <label className="form-label fw-bold">Experience (Years)</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="form-control"
+                  placeholder="e.g. 10"
+                  value={doctor.experience}
+                  onChange={(e) => setDoctor({ ...doctor, experience: e.target.value })}
+                />
+              </div>
 
-            {editingId !== null && (
+              <div className="col-md-6">
+                <label className="form-label fw-bold">Consultation Fee ($)</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="form-control"
+                  placeholder="50.00"
+                  value={doctor.consultationFee}
+                  onChange={(e) => setDoctor({ ...doctor, consultationFee: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="mt-3">
               <button
-                className="btn btn-secondary ms-2"
-                onClick={resetForm}
+                className={`btn ${editingId === null ? "btn-success" : "btn-warning"} me-2`}
+                onClick={saveDoctor}
               >
-                Cancel Edit
+                {editingId === null ? "Save Doctor" : "Update Doctor"}
               </button>
-            )}
+
+              {editingId !== null && (
+                <button className="btn btn-secondary" onClick={resetForm}>
+                  Cancel Edit
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* SEARCH + FILTER */}
-
-        <div className="card shadow p-3 mb-3">
-          <div className="row">
-            <div className="col-md-8 mb-2 mb-md-0">
+        {/* SEARCH & FILTER */}
+        <div className="card shadow p-3 mb-4">
+          <div className="row g-2">
+            <div className="col-md-8">
               <input
                 type="text"
                 className="form-control"
-                placeholder="Search by name, specialization, phone, email..."
+                placeholder="🔍 Search doctor name, specialization, or email..."
                 value={search}
-                onChange={(e) =>
-                  setSearch(e.target.value)
-                }
+                onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-
             <div className="col-md-4">
               <select
                 className="form-select"
                 value={specializationFilter}
-                onChange={(e) =>
-                  setSpecializationFilter(
-                    e.target.value
-                  )
-                }
+                onChange={(e) => setSpecializationFilter(e.target.value)}
               >
-                <option value="All">
-                  All Specializations
-                </option>
-
-                {specializations.map(
-                  (specialization) => (
-                    <option
-                      key={specialization}
-                      value={specialization}
-                    >
-                      {specialization}
-                    </option>
-                  )
-                )}
+                <option value="All">All Specializations</option>
+                {specializations.map((spec) => (
+                  <option key={spec} value={spec}>
+                    {spec}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
         </div>
 
         {/* DOCTOR TABLE */}
-
-        <div className="table-responsive">
-          <table className="table table-bordered table-hover">
-            <thead className="table-dark">
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Specialization</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Experience</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {filteredDoctors.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan="7"
-                    className="text-center"
-                  >
-                    No Matching Doctors Found
-                  </td>
-                </tr>
-              ) : (
-                filteredDoctors.map((d) => (
-                  <tr key={d.id}>
-                    <td>{d.id}</td>
-
-                    <td>{d.name}</td>
-
-                    <td>{d.specialization}</td>
-
-                    <td>{d.phone}</td>
-
-                    <td>{d.email}</td>
-
-                    <td>
-                      {d.experience} Years
-                    </td>
-
-                    <td>
-                      <button
-                        className="btn btn-primary btn-sm me-2"
-                        onClick={() =>
-                          editDoctor(d)
-                        }
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() =>
-                          removeDoctor(d.id)
-                        }
-                      >
-                        Delete
-                      </button>
-                    </td>
+        <div className="card shadow">
+          <div className="card-body p-0">
+            <div className="table-responsive">
+              <table className="table table-hover table-striped mb-0 align-middle">
+                <thead className="table-dark">
+                  <tr>
+                    <th>ID</th>
+                    <th>Doctor Name</th>
+                    <th>Specialization & Qualification</th>
+                    <th>Department</th>
+                    <th>Experience</th>
+                    <th>Consultation Fee</th>
+                    <th>Actions</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                </thead>
+
+                <tbody>
+                  {filteredDoctors.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="text-center p-4">
+                        No matching doctors found.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredDoctors.map((d) => (
+                      <tr key={d.id}>
+                        <td><strong>#{d.id}</strong></td>
+                        <td>
+                          <strong>{d.name}</strong>
+                          <div className="text-muted small">{d.email} | {d.phone}</div>
+                        </td>
+                        <td>
+                          <div><strong>{d.specialization}</strong></div>
+                          <small className="text-muted">{d.qualification || "N/A"}</small>
+                        </td>
+                        <td>
+                          <span className="badge bg-secondary">
+                            {d.department?.name || "General"}
+                          </span>
+                        </td>
+                        <td>{d.experience} Years</td>
+                        <td><strong>${Number(d.consultationFee || 50).toFixed(2)}</strong></td>
+                        <td>
+                          <button
+                            className="btn btn-primary btn-sm me-1"
+                            onClick={() => editDoctor(d)}
+                          >
+                            ✏️ Edit
+                          </button>
+                          <button
+                            className="btn btn-danger btn-sm"
+                            onClick={() => removeDoctor(d.id)}
+                          >
+                            🗑️
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>

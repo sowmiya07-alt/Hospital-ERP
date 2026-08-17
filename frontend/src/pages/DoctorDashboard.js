@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -12,6 +12,7 @@ import {
 } from "../services/prescriptionService";
 
 import { getMedicines } from "../services/medicineService";
+import { saveConsultation } from "../services/consultationService";
 
 function DoctorDashboard() {
   const navigate = useNavigate();
@@ -28,6 +29,20 @@ function DoctorDashboard() {
   const [historyPatient, setHistoryPatient] = useState(null);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
+  const [activeConsultationAppt, setActiveConsultationAppt] = useState(null);
+  const [consultationForm, setConsultationForm] = useState({
+    chiefComplaint: "",
+    symptoms: "",
+    diagnosis: "",
+    bloodPressure: "120/80",
+    temperature: "98.6",
+    pulse: "72",
+    weight: "70",
+    oxygenSaturation: "98",
+    clinicalNotes: "",
+    followUpDate: "",
+  });
+
   const [prescription, setPrescription] = useState({
     medicineId: "",
     dosage: "",
@@ -43,16 +58,11 @@ function DoctorDashboard() {
 
   const doctorId = localStorage.getItem("doctorId");
 
-  useEffect(() => {
-    loadDoctorAppointments();
-    loadMedicines();
-  }, []);
-
   // ============================
   // LOAD DOCTOR APPOINTMENTS
   // ============================
 
-  const loadDoctorAppointments = async () => {
+  const loadDoctorAppointments = useCallback(async () => {
     if (!doctorId) {
       setError(
         "Doctor account is not linked to a doctor record."
@@ -85,13 +95,13 @@ function DoctorDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [doctorId]);
 
   // ============================
   // LOAD MEDICINES
   // ============================
 
-  const loadMedicines = async () => {
+  const loadMedicines = useCallback(async () => {
     try {
       const response = await getMedicines();
 
@@ -99,7 +109,13 @@ function DoctorDashboard() {
     } catch (error) {
       console.log("Medicine Load Error:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadDoctorAppointments();
+    loadMedicines();
+  }, [loadDoctorAppointments, loadMedicines]);
+
 
   // ============================
   // UPDATE APPOINTMENT STATUS
@@ -174,6 +190,47 @@ function DoctorDashboard() {
       );
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const openConsultationModal = (appointment) => {
+    setActiveConsultationAppt(appointment);
+    setConsultationForm({
+      chiefComplaint: "",
+      symptoms: "",
+      diagnosis: "",
+      bloodPressure: "120/80",
+      temperature: "98.6 °F",
+      pulse: "72 bpm",
+      weight: "70 kg",
+      oxygenSaturation: "98%",
+      clinicalNotes: "",
+      followUpDate: "",
+    });
+  };
+
+  const handleSaveConsultation = async () => {
+    if (!activeConsultationAppt) return;
+    if (!consultationForm.diagnosis) {
+      alert("Please enter a diagnosis.");
+      return;
+    }
+
+    try {
+      const payload = {
+        patient: { id: activeConsultationAppt.patient.id },
+        doctor: { id: activeConsultationAppt.doctor.id },
+        appointment: { id: activeConsultationAppt.id },
+        ...consultationForm,
+      };
+
+      await saveConsultation(payload);
+      alert("Clinical consultation record saved successfully!");
+      setActiveConsultationAppt(null);
+      loadDoctorAppointments();
+    } catch (err) {
+      console.log("Save consultation error:", err);
+      alert("Unable to save clinical consultation record.");
     }
   };
 
@@ -632,10 +689,20 @@ function DoctorDashboard() {
                             <td>
 
                               <div className="d-flex flex-wrap gap-2">
-
                                 {appointment.status ===
                                   "Scheduled" && (
                                   <>
+                                    <button
+                                      className="btn btn-info btn-sm text-white"
+                                      onClick={() =>
+                                        openConsultationModal(
+                                          appointment
+                                        )
+                                      }
+                                    >
+                                      🩺 Consultation & Vitals
+                                    </button>
+
                                     <button
                                       className="btn btn-success btn-sm"
                                       disabled={
@@ -1029,6 +1096,145 @@ function DoctorDashboard() {
             </div>
           </div>
 
+        )}
+
+        {/* CLINICAL CONSULTATION MODAL */}
+        {activeConsultationAppt && (
+          <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
+            <div className="modal-dialog modal-lg">
+              <div className="modal-content shadow-lg">
+                <div className="modal-header bg-info text-white">
+                  <h5 className="modal-title">
+                    🩺 Clinical Consultation Record - Patient: {activeConsultationAppt.patient?.name}
+                  </h5>
+                  <button
+                    className="btn-close btn-close-white"
+                    onClick={() => setActiveConsultationAppt(null)}
+                  ></button>
+                </div>
+
+                <div className="modal-body">
+                  <div className="alert alert-light border mb-3">
+                    <strong>Appointment Details:</strong> Date: {activeConsultationAppt.appointmentDate} | Time: {activeConsultationAppt.appointmentTime}
+                  </div>
+
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <label className="form-label fw-bold">Chief Complaint</label>
+                      <input
+                        className="form-control"
+                        placeholder="e.g. Chest pain, Fever for 2 days"
+                        value={consultationForm.chiefComplaint}
+                        onChange={(e) => setConsultationForm({ ...consultationForm, chiefComplaint: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="col-md-6">
+                      <label className="form-label fw-bold">Symptoms</label>
+                      <input
+                        className="form-control"
+                        placeholder="e.g. Fatigue, Shortness of breath"
+                        value={consultationForm.symptoms}
+                        onChange={(e) => setConsultationForm({ ...consultationForm, symptoms: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="col-md-12">
+                      <label className="form-label fw-bold">Diagnosis *</label>
+                      <input
+                        className="form-control"
+                        placeholder="e.g. Acute Bronchitis / Essential Hypertension"
+                        value={consultationForm.diagnosis}
+                        onChange={(e) => setConsultationForm({ ...consultationForm, diagnosis: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="col-12"><hr /><h6>🩺 Patient Vitals</h6></div>
+
+                    <div className="col-md-4">
+                      <label className="form-label fw-bold">Blood Pressure</label>
+                      <input
+                        className="form-control"
+                        placeholder="120/80"
+                        value={consultationForm.bloodPressure}
+                        onChange={(e) => setConsultationForm({ ...consultationForm, bloodPressure: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="col-md-4">
+                      <label className="form-label fw-bold">Temperature</label>
+                      <input
+                        className="form-control"
+                        placeholder="98.6 °F"
+                        value={consultationForm.temperature}
+                        onChange={(e) => setConsultationForm({ ...consultationForm, temperature: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="col-md-4">
+                      <label className="form-label fw-bold">Pulse Rate</label>
+                      <input
+                        className="form-control"
+                        placeholder="72 bpm"
+                        value={consultationForm.pulse}
+                        onChange={(e) => setConsultationForm({ ...consultationForm, pulse: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="col-md-6">
+                      <label className="form-label fw-bold">Weight</label>
+                      <input
+                        className="form-control"
+                        placeholder="70 kg"
+                        value={consultationForm.weight}
+                        onChange={(e) => setConsultationForm({ ...consultationForm, weight: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="col-md-6">
+                      <label className="form-label fw-bold">Oxygen Saturation (SpO2)</label>
+                      <input
+                        className="form-control"
+                        placeholder="98%"
+                        value={consultationForm.oxygenSaturation}
+                        onChange={(e) => setConsultationForm({ ...consultationForm, oxygenSaturation: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="col-md-12">
+                      <label className="form-label fw-bold">Clinical Notes & Recommendations</label>
+                      <textarea
+                        rows="3"
+                        className="form-control"
+                        placeholder="Additional clinical notes, dietary advice, or lifestyle modifications..."
+                        value={consultationForm.clinicalNotes}
+                        onChange={(e) => setConsultationForm({ ...consultationForm, clinicalNotes: e.target.value })}
+                      ></textarea>
+                    </div>
+
+                    <div className="col-md-6">
+                      <label className="form-label fw-bold">Follow-Up Date</label>
+                      <input
+                        type="date"
+                        className="form-control"
+                        value={consultationForm.followUpDate}
+                        onChange={(e) => setConsultationForm({ ...consultationForm, followUpDate: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="modal-footer">
+                  <button className="btn btn-success" onClick={handleSaveConsultation}>
+                    💾 Save Consultation Record & Complete
+                  </button>
+                  <button className="btn btn-secondary" onClick={() => setActiveConsultationAppt(null)}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
       </div>

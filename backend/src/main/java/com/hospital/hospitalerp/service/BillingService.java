@@ -48,142 +48,96 @@ public class BillingService {
         }
 
         Billing billing = new Billing();
-
         billing.setPatient(patient);
-        billing.setAmount(request.getAmount());
 
-        // Default new bill to Pending
+        double consult = request.getConsultationFee() != null ? request.getConsultationFee() : 0.0;
+        double pharm = request.getPharmacyFee() != null ? request.getPharmacyFee() : 0.0;
+        double room = request.getRoomFee() != null ? request.getRoomFee() : 0.0;
+        double lab = request.getLabFee() != null ? request.getLabFee() : 0.0;
+        double tax = request.getTaxAmount() != null ? request.getTaxAmount() : 0.0;
+        double discount = request.getDiscountAmount() != null ? request.getDiscountAmount() : 0.0;
+
+        double baseAmount = request.getAmount() != null ? request.getAmount() : (consult + pharm + room + lab);
+        double total = (baseAmount > 0 ? baseAmount : (consult + pharm + room + lab)) + tax - discount;
+        double paid = request.getPaidAmount() != null ? request.getPaidAmount() : 0.0;
+
+        billing.setConsultationFee(consult);
+        billing.setPharmacyFee(pharm);
+        billing.setRoomFee(room);
+        billing.setLabFee(lab);
+        billing.setTaxAmount(tax);
+        billing.setDiscountAmount(discount);
+        billing.setAmount(baseAmount);
+        billing.setTotalAmount(total);
+        billing.setPaidAmount(paid);
+        billing.setBalanceAmount(Math.max(0.0, total - paid));
+        billing.setPaymentMode(request.getPaymentMode() != null ? request.getPaymentMode() : "CASH");
+        billing.setInvoiceNumber("INV-" + System.currentTimeMillis() % 1000000);
+
         String status = request.getPaymentStatus();
-
         if (status == null || status.trim().isEmpty()) {
-            status = "Pending";
+            status = (paid >= total && total > 0) ? "Paid" : (paid > 0 ? "Partial" : "Pending");
         }
-
         billing.setPaymentStatus(status);
 
-        // Automatically set payment date if Paid
         if ("Paid".equalsIgnoreCase(status)) {
-
-            billing.setPaymentDate(
-                    LocalDate.now().toString()
-            );
-
+            billing.setPaymentDate(LocalDate.now().toString());
         } else {
-
             billing.setPaymentDate(null);
         }
 
         return billingRepository.save(billing);
     }
 
-
-    // ==========================================
-    // GET ALL BILLS - ADMIN
-    // ==========================================
-
     public List<Billing> getAllBillings() {
-
         return billingRepository.findAll();
     }
 
-
-    // ==========================================
-    // GET BILL BY ID
-    // ==========================================
-
     public Billing getBillingById(Long id) {
-
-        return billingRepository
-                .findById(id)
-                .orElse(null);
+        return billingRepository.findById(id).orElse(null);
     }
 
-
-    // ==========================================
-    // GET BILLS FOR ONE PATIENT
-    // ==========================================
-
-    public List<Billing> getBillingsByPatientId(
-            Long patientId) {
-
-        return billingRepository
-                .findByPatientId(patientId);
+    public List<Billing> getBillingsByPatientId(Long patientId) {
+        return billingRepository.findByPatientId(patientId);
     }
 
+    public Billing updateBilling(Long id, BillingRequest request) {
 
-    // ==========================================
-    // UPDATE BILL
-    // ==========================================
+        Billing existing = billingRepository.findById(id).orElseThrow(() -> new RuntimeException("Billing not found"));
 
-    public Billing updateBilling(
-            Long id,
-            BillingRequest request) {
-
-        Billing existing =
-                billingRepository
-                        .findById(id)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Billing not found"
-                                )
-                        );
-
-        // Update patient if provided
         if (request.getPatientId() != null) {
-
-            Patient patient =
-                    patientRepository
-                            .findById(
-                                    request.getPatientId()
-                            )
-                            .orElseThrow(() ->
-                                    new RuntimeException(
-                                            "Patient not found"
-                                    )
-                            );
-
+            Patient patient = patientRepository.findById(request.getPatientId())
+                    .orElseThrow(() -> new RuntimeException("Patient not found"));
             existing.setPatient(patient);
         }
 
-        // Update amount if provided
-        if (request.getAmount() != null) {
+        if (request.getConsultationFee() != null) existing.setConsultationFee(request.getConsultationFee());
+        if (request.getPharmacyFee() != null) existing.setPharmacyFee(request.getPharmacyFee());
+        if (request.getRoomFee() != null) existing.setRoomFee(request.getRoomFee());
+        if (request.getLabFee() != null) existing.setLabFee(request.getLabFee());
+        if (request.getTaxAmount() != null) existing.setTaxAmount(request.getTaxAmount());
+        if (request.getDiscountAmount() != null) existing.setDiscountAmount(request.getDiscountAmount());
+        if (request.getPaidAmount() != null) existing.setPaidAmount(request.getPaidAmount());
+        if (request.getPaymentMode() != null) existing.setPaymentMode(request.getPaymentMode());
 
-            existing.setAmount(
-                    request.getAmount()
-            );
+        double total = (existing.getConsultationFee() + existing.getPharmacyFee() + existing.getRoomFee() + existing.getLabFee()) + existing.getTaxAmount() - existing.getDiscountAmount();
+        if (request.getAmount() != null && request.getAmount() > 0) {
+            existing.setAmount(request.getAmount());
+            total = request.getAmount() + existing.getTaxAmount() - existing.getDiscountAmount();
+        } else {
+            existing.setAmount(total);
         }
 
-        // Update payment status
-        if (
-                request.getPaymentStatus() != null &&
-                !request.getPaymentStatus()
-                        .trim()
-                        .isEmpty()
-        ) {
+        existing.setTotalAmount(total);
+        existing.setBalanceAmount(Math.max(0.0, total - existing.getPaidAmount()));
 
-            String newStatus =
-                    request.getPaymentStatus();
-
-            existing.setPaymentStatus(
-                    newStatus
-            );
-
-            // Automatically add today's date
-            // when payment becomes Paid
-
-            if (
-                    "Paid".equalsIgnoreCase(
-                            newStatus
-                    )
-            ) {
-
-                existing.setPaymentDate(
-                        LocalDate.now().toString()
-                );
-
-            } else {
-
-                existing.setPaymentDate(null);
+        if (request.getPaymentStatus() != null && !request.getPaymentStatus().trim().isEmpty()) {
+            String newStatus = request.getPaymentStatus();
+            existing.setPaymentStatus(newStatus);
+            if ("Paid".equalsIgnoreCase(newStatus)) {
+                existing.setPaidAmount(total);
+                existing.setBalanceAmount(0.0);
+                existing.setPaymentDate(LocalDate.now().toString());
             }
         }
 

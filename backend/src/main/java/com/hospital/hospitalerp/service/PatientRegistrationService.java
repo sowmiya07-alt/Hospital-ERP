@@ -104,8 +104,11 @@ public class PatientRegistrationService {
 
         user.setUsername(username);
 
+        org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder encoder =
+                new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+
         user.setPassword(
-                request.getPassword()
+                encoder.encode(request.getPassword())
         );
 
         // User cannot choose ADMIN

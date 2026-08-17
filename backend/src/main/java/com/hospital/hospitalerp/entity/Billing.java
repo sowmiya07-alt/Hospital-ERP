@@ -14,9 +14,20 @@ public class Billing {
     @JoinColumn(name = "patient_id")
     private Patient patient;
 
-    private Double amount;
-    private String paymentStatus;
-    private String paymentDate;
+    private Double consultationFee = 0.0;
+    private Double pharmacyFee = 0.0;
+    private Double roomFee = 0.0;
+    private Double labFee = 0.0;
+    private Double taxAmount = 0.0;
+    private Double discountAmount = 0.0;
+    private Double totalAmount = 0.0;
+    private Double paidAmount = 0.0;
+    private Double balanceAmount = 0.0;
+
+    // CASH, CARD, UPI, INSURANCE
+    private String paymentMode = "CASH";
+
+    private String invoiceNumber;
 
     public Billing() {
     }
@@ -26,6 +37,7 @@ public class Billing {
         this.id = id;
         this.patient = patient;
         this.amount = amount;
+        this.totalAmount = amount;
         this.paymentStatus = paymentStatus;
         this.paymentDate = paymentDate;
     }
@@ -68,5 +80,93 @@ public class Billing {
 
     public void setPaymentDate(String paymentDate) {
         this.paymentDate = paymentDate;
+    }
+
+    public Double getConsultationFee() {
+        return consultationFee;
+    }
+
+    public void setConsultationFee(Double consultationFee) {
+        this.consultationFee = consultationFee;
+    }
+
+    public Double getPharmacyFee() {
+        return pharmacyFee;
+    }
+
+    public void setPharmacyFee(Double pharmacyFee) {
+        this.pharmacyFee = pharmacyFee;
+    }
+
+    public Double getRoomFee() {
+        return roomFee;
+    }
+
+    public void setRoomFee(Double roomFee) {
+        this.roomFee = roomFee;
+    }
+
+    public Double getLabFee() {
+        return labFee;
+    }
+
+    public void setLabFee(Double labFee) {
+        this.labFee = labFee;
+    }
+
+    public Double getTaxAmount() {
+        return taxAmount;
+    }
+
+    public void setTaxAmount(Double taxAmount) {
+        this.taxAmount = taxAmount;
+    }
+
+    public Double getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(Double discountAmount) {
+        this.discountAmount = discountAmount;
+    }
+
+    public Double getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(Double totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    public Double getPaidAmount() {
+        return paidAmount;
+    }
+
+    public void setPaidAmount(Double paidAmount) {
+        this.paidAmount = paidAmount;
+    }
+
+    public Double getBalanceAmount() {
+        return balanceAmount;
+    }
+
+    public void setBalanceAmount(Double balanceAmount) {
+        this.balanceAmount = balanceAmount;
+    }
+
+    public String getPaymentMode() {
+        return paymentMode;
+    }
+
+    public void setPaymentMode(String paymentMode) {
+        this.paymentMode = paymentMode;
+    }
+
+    public String getInvoiceNumber() {
+        return invoiceNumber;
+    }
+
+    public void setInvoiceNumber(String invoiceNumber) {
+        this.invoiceNumber = invoiceNumber;
     }
 }

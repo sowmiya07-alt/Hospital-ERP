@@ -1,17 +1,11 @@
-import axios from "axios";
-
-const API_URL =
-  "https://hospital-erp-1-bsh6.onrender.com/auth";
+import api from "./api";
 
 // ============================
 // LOGIN USER
 // ============================
 
 export const loginUser = (loginData) => {
-  return axios.post(
-    `${API_URL}/login`,
-    loginData
-  );
+  return api.post("/auth/login", loginData);
 };
 
 // ============================
@@ -19,8 +13,5 @@ export const loginUser = (loginData) => {
 // ============================
 
 export const registerPatient = (patientData) => {
-  return axios.post(
-    `${API_URL}/register/patient`,
-    patientData
-  );
-};
+  return api.post("/auth/register/patient", patientData);
+};

@@ -42,11 +42,14 @@ public class PatientService {
         String password =
                 username + "123";
 
+        org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder encoder =
+                new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+
         // Create patient login account
         User patientUser = new User();
 
         patientUser.setUsername(username);
-        patientUser.setPassword(password);
+        patientUser.setPassword(encoder.encode(password));
         patientUser.setRole("PATIENT");
 
         // Link login ONLY to this patient
@@ -57,41 +60,6 @@ public class PatientService {
 
         // Save login
         userRepository.save(patientUser);
-
-        // Show generated credentials
-        // in VS Code backend terminal
-
-        System.out.println(
-                "================================="
-        );
-
-        System.out.println(
-                "Patient Created Successfully"
-        );
-
-        System.out.println(
-                "Patient ID: "
-                        + savedPatient.getId()
-        );
-
-        System.out.println(
-                "Patient Name: "
-                        + savedPatient.getName()
-        );
-
-        System.out.println(
-                "Username: "
-                        + username
-        );
-
-        System.out.println(
-                "Password: "
-                        + password
-        );
-
-        System.out.println(
-                "================================="
-        );
 
         return savedPatient;
     }
@@ -132,9 +100,6 @@ public class PatientService {
 
         String username =
                 baseUsername;
-
-        // If username already exists,
-        // add Patient ID
 
         if (
                 userRepository
@@ -191,25 +156,20 @@ public class PatientService {
             return null;
         }
 
-        existing.setName(
-                patient.getName()
-        );
-
-        existing.setAge(
-                patient.getAge()
-        );
-
-        existing.setGender(
-                patient.getGender()
-        );
-
-        existing.setPhone(
-                patient.getPhone()
-        );
-
-        existing.setAddress(
-                patient.getAddress()
-        );
+        existing.setName(patient.getName());
+        existing.setAge(patient.getAge());
+        existing.setGender(patient.getGender());
+        existing.setPhone(patient.getPhone());
+        existing.setEmail(patient.getEmail());
+        existing.setAddress(patient.getAddress());
+        existing.setBloodGroup(patient.getBloodGroup());
+        existing.setEmergencyContact(patient.getEmergencyContact());
+        existing.setEmergencyPhone(patient.getEmergencyPhone());
+        existing.setAllergies(patient.getAllergies());
+        existing.setMedicalHistory(patient.getMedicalHistory());
+        if (patient.getStatus() != null) {
+            existing.setStatus(patient.getStatus());
+        }
 
         return patientRepository.save(existing);
     }

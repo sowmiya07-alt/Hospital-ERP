@@ -6,6 +6,7 @@ import com.hospital.hospitalerp.entity.User;
 import com.hospital.hospitalerp.repository.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -15,6 +16,8 @@ public class AuthService {
 
     @Autowired
     private UserRepository userRepository;
+
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public LoginResponse login(LoginRequest request) {
 
@@ -36,8 +39,11 @@ public class AuthService {
 
         User user = optionalUser.get();
 
-        // Wrong password
-        if (!user.getPassword().equals(request.getPassword())) {
+        // Check password matching (supports BCrypt and fallback plain text comparison)
+        boolean passwordMatches = passwordEncoder.matches(request.getPassword(), user.getPassword()) ||
+                user.getPassword().equals(request.getPassword());
+
+        if (!passwordMatches) {
 
             return new LoginResponse(
                     false,

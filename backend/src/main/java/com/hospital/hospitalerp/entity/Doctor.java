@@ -15,8 +15,17 @@ public class Doctor {
     private String phone;
     private String email;
 
-    // Integer allows null when only doctor ID is sent
     private Integer experience;
+    private String qualification;
+    private Double consultationFee = 50.0;
+    private String availableDays = "Mon,Tue,Wed,Thu,Fri";
+
+    // ACTIVE, INACTIVE
+    private String status = "ACTIVE";
+
+    @ManyToOne
+    @JoinColumn(name = "department_id")
+    private Department department;
 
     public Doctor() {
     }
@@ -33,6 +42,21 @@ public class Doctor {
         this.phone = phone;
         this.email = email;
         this.experience = experience;
+    }
+
+    public Doctor(Long id, String name, String specialization, String qualification,
+                  String phone, String email, Integer experience, Double consultationFee,
+                  Department department, String status) {
+        this.id = id;
+        this.name = name;
+        this.specialization = specialization;
+        this.qualification = qualification;
+        this.phone = phone;
+        this.email = email;
+        this.experience = experience;
+        this.consultationFee = consultationFee;
+        this.department = department;
+        this.status = status != null ? status : "ACTIVE";
     }
 
     public Long getId() {
@@ -59,6 +83,14 @@ public class Doctor {
         this.specialization = specialization;
     }
 
+    public String getQualification() {
+        return qualification;
+    }
+
+    public void setQualification(String qualification) {
+        this.qualification = qualification;
+    }
+
     public String getPhone() {
         return phone;
     }
@@ -81,5 +113,37 @@ public class Doctor {
 
     public void setExperience(Integer experience) {
         this.experience = experience;
+    }
+
+    public Double getConsultationFee() {
+        return consultationFee;
+    }
+
+    public void setConsultationFee(Double consultationFee) {
+        this.consultationFee = consultationFee;
+    }
+
+    public String getAvailableDays() {
+        return availableDays;
+    }
+
+    public void setAvailableDays(String availableDays) {
+        this.availableDays = availableDays;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Department getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(Department department) {
+        this.department = department;
     }
 }

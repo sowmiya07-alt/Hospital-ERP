@@ -1,23 +1,16 @@
-import axios from "axios";
-
-const API_URL = "https://hospital-erp-1-bsh6.onrender.com/billings";
+import api from "./api";
 
 // ADMIN - GET ALL BILLINGS
-export const getBillings = () =>
-  axios.get(API_URL);
+export const getBillings = () => api.get("/billings");
 
 // CREATE BILLING
-export const addBilling = (billing) =>
-  axios.post(API_URL, billing);
+export const addBilling = (billing) => api.post("/billings", billing);
 
 // UPDATE BILLING
-export const updateBilling = (id, billing) =>
-  axios.put(`${API_URL}/${id}`, billing);
+export const updateBilling = (id, billing) => api.put(`/billings/${id}`, billing);
 
 // DELETE BILLING
-export const deleteBilling = (id) =>
-  axios.delete(`${API_URL}/${id}`);
+export const deleteBilling = (id) => api.delete(`/billings/${id}`);
 
 // PATIENT - GET ONLY THEIR BILLING RECORDS
-export const getPatientBillings = (patientId) =>
-  axios.get(`${API_URL}/patient/${patientId}`);
+export const getPatientBillings = (patientId) => api.get(`/billings/patient/${patientId}`);

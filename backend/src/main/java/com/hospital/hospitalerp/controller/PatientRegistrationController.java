@@ -13,10 +13,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = {
-        "http://localhost:3000",
-        "https://hospital-erp-zeta.vercel.app"
-})
 public class PatientRegistrationController {
 
     @Autowired

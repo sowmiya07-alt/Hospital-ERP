@@ -14,7 +14,12 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("https://hospital-erp-zeta.vercel.app")
+                        .allowedOriginPatterns(
+                                "http://localhost:[*]",
+                                "http://127.0.0.1:[*]",
+                                "https://*.vercel.app",
+                                "https://hospital-erp-zeta.vercel.app"
+                        )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
@@ -22,3 +27,4 @@ public class CorsConfig {
         };
     }
 }
+

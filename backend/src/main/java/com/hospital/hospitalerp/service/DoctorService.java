@@ -42,10 +42,13 @@ public class DoctorService {
         String password =
                 username + "123";
 
+        org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder encoder =
+                new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+
         User doctorUser = new User();
 
         doctorUser.setUsername(username);
-        doctorUser.setPassword(password);
+        doctorUser.setPassword(encoder.encode(password));
         doctorUser.setRole("DOCTOR");
 
         doctorUser.setDoctor(savedDoctor);
@@ -176,25 +179,24 @@ public class DoctorService {
             return null;
         }
 
-        existing.setName(
-                doctor.getName()
-        );
-
-        existing.setSpecialization(
-                doctor.getSpecialization()
-        );
-
-        existing.setPhone(
-                doctor.getPhone()
-        );
-
-        existing.setEmail(
-                doctor.getEmail()
-        );
-
-        existing.setExperience(
-                doctor.getExperience()
-        );
+        existing.setName(doctor.getName());
+        existing.setSpecialization(doctor.getSpecialization());
+        existing.setQualification(doctor.getQualification());
+        existing.setPhone(doctor.getPhone());
+        existing.setEmail(doctor.getEmail());
+        existing.setExperience(doctor.getExperience());
+        if (doctor.getConsultationFee() != null) {
+            existing.setConsultationFee(doctor.getConsultationFee());
+        }
+        if (doctor.getAvailableDays() != null) {
+            existing.setAvailableDays(doctor.getAvailableDays());
+        }
+        if (doctor.getStatus() != null) {
+            existing.setStatus(doctor.getStatus());
+        }
+        if (doctor.getDepartment() != null) {
+            existing.setDepartment(doctor.getDepartment());
+        }
 
         return doctorRepository.save(existing);
     }
