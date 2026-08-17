@@ -31,14 +31,41 @@ public class MedicineService {
 
         if (existing != null) {
             existing.setMedicineName(medicine.getMedicineName());
+            existing.setGenericName(medicine.getGenericName());
             existing.setDosage(medicine.getDosage());
+            existing.setCategory(medicine.getCategory());
             existing.setManufacturer(medicine.getManufacturer());
             existing.setStock(medicine.getStock());
+            existing.setUnitPrice(medicine.getUnitPrice());
+            existing.setBatchNumber(medicine.getBatchNumber());
+            existing.setExpiryDate(medicine.getExpiryDate());
+            if (medicine.getReorderLevel() != null) {
+                existing.setReorderLevel(medicine.getReorderLevel());
+            }
+            if (medicine.getStatus() != null) {
+                existing.setStatus(medicine.getStatus());
+            }
 
             return medicineRepository.save(existing);
         }
 
         return null;
+    }
+
+    public List<Medicine> getLowStockMedicines() {
+        return medicineRepository.findLowStockMedicines();
+    }
+
+    public Medicine dispenseMedicine(Long id, Integer quantity) {
+        Medicine medicine = medicineRepository.findById(id).orElse(null);
+        if (medicine == null) {
+            throw new RuntimeException("Medicine not found with ID: " + id);
+        }
+        if (medicine.getStock() < quantity) {
+            throw new RuntimeException("Insufficient stock available for " + medicine.getMedicineName() + ". Current stock: " + medicine.getStock());
+        }
+        medicine.setStock(medicine.getStock() - quantity);
+        return medicineRepository.save(medicine);
     }
 
     public String deleteMedicine(Long id) {

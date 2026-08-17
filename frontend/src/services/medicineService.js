@@ -1,15 +1,13 @@
-import axios from "axios";
+import api from "./api";
 
-const API_URL = "https://hospital-erp-1-bsh6.onrender.com/medicines";
+export const getMedicines = () => api.get("/medicines");
 
-export const getMedicines = () =>
-  axios.get(API_URL);
+export const addMedicine = (medicine) => api.post("/medicines", medicine);
 
-export const addMedicine = (medicine) =>
-  axios.post(API_URL, medicine);
+export const updateMedicine = (id, medicine) => api.put(`/medicines/${id}`, medicine);
 
-export const updateMedicine = (id, medicine) =>
-  axios.put(`${API_URL}/${id}`, medicine);
+export const getLowStockMedicines = () => api.get("/medicines/low-stock");
 
-export const deleteMedicine = (id) =>
-  axios.delete(`${API_URL}/${id}`);
+export const dispenseMedicine = (id, quantity) => api.post(`/medicines/${id}/dispense?quantity=${quantity}`);
+
+export const deleteMedicine = (id) => api.delete(`/medicines/${id}`);

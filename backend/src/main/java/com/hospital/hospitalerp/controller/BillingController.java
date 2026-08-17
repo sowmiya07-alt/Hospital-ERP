@@ -11,7 +11,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/billings")
-@CrossOrigin(origins = "http://localhost:3000")
 public class BillingController {
 
     @Autowired

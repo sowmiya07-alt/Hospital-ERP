@@ -1,23 +1,16 @@
-import axios from "axios";
-
-const API_URL = "https://hospital-erp-1-bsh6.onrender.com/prescriptions";
+import api from "./api";
 
 // ADMIN - GET ALL PRESCRIPTIONS
-export const getPrescriptions = () =>
-  axios.get(API_URL);
+export const getPrescriptions = () => api.get("/prescriptions");
 
 // CREATE PRESCRIPTION
-export const addPrescription = (prescription) =>
-  axios.post(API_URL, prescription);
+export const addPrescription = (prescription) => api.post("/prescriptions", prescription);
 
 // UPDATE PRESCRIPTION
-export const updatePrescription = (id, prescription) =>
-  axios.put(`${API_URL}/${id}`, prescription);
+export const updatePrescription = (id, prescription) => api.put(`/prescriptions/${id}`, prescription);
 
 // DELETE PRESCRIPTION
-export const deletePrescription = (id) =>
-  axios.delete(`${API_URL}/${id}`);
+export const deletePrescription = (id) => api.delete(`/prescriptions/${id}`);
 
 // PATIENT - GET ONLY THEIR PRESCRIPTIONS
-export const getPatientPrescriptions = (patientId) =>
-  axios.get(`${API_URL}/patient/${patientId}`);
+export const getPatientPrescriptions = (patientId) => api.get(`/prescriptions/patient/${patientId}`);
