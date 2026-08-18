@@ -55,4 +55,12 @@ public class PrescriptionController {
 
         return prescriptionService.deletePrescription(id);
     }
+
+    // DISPENSE
+    @PutMapping("/{id}/dispense")
+    public Prescription dispensePrescription(
+            @PathVariable Long id) {
+
+        return prescriptionService.dispensePrescription(id);
+    }
 }

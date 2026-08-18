@@ -177,4 +177,20 @@ public class Patient {
     public void setStatus(String status) {
         this.status = status;
     }
+
+    private String patientCode;
+
+    public String getPatientCode() {
+        if (patientCode != null && !patientCode.trim().isEmpty()) {
+            return patientCode;
+        }
+        if (id != null) {
+            return String.format("PAT-2026-%06d", id);
+        }
+        return null;
+    }
+
+    public void setPatientCode(String patientCode) {
+        this.patientCode = patientCode;
+    }
 }

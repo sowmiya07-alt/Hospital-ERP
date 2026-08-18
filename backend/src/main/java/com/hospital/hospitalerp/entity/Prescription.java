@@ -82,4 +82,50 @@ public class Prescription {
     public void setDuration(int duration) {
         this.duration = duration;
     }
+
+    @ManyToOne
+    @JoinColumn(name = "doctor_id")
+    private Doctor doctor;
+
+    private String status = "PENDING";
+    private String instructions;
+    private String prescriptionCode;
+
+    public Doctor getDoctor() {
+        return doctor;
+    }
+
+    public void setDoctor(Doctor doctor) {
+        this.doctor = doctor;
+    }
+
+    public String getStatus() {
+        return status != null ? status : "PENDING";
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getInstructions() {
+        return instructions;
+    }
+
+    public void setInstructions(String instructions) {
+        this.instructions = instructions;
+    }
+
+    public String getPrescriptionCode() {
+        if (prescriptionCode != null && !prescriptionCode.trim().isEmpty()) {
+            return prescriptionCode;
+        }
+        if (id != null) {
+            return String.format("RX-2026-%06d", id);
+        }
+        return null;
+    }
+
+    public void setPrescriptionCode(String prescriptionCode) {
+        this.prescriptionCode = prescriptionCode;
+    }
 }

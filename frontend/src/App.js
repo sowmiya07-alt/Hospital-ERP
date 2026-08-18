@@ -14,6 +14,9 @@ import Appointments from "./pages/Appointments";
 import Medicines from "./pages/Medicines";
 import Prescriptions from "./pages/Prescriptions";
 import Billing from "./pages/Billing";
+import LabReports from "./pages/LabReports";
+import Admissions from "./pages/Admissions";
+import AuditLogs from "./pages/AuditLogs";
 
 import DoctorDashboard from "./pages/DoctorDashboard";
 import PatientDashboard from "./pages/PatientDashboard";
@@ -116,12 +119,45 @@ function App() {
         />
 
         <Route
+          path="/labs"
+          element={
+            <ProtectedRoute
+              allowedRoles={["ADMIN", "DOCTOR", "PATIENT"]}
+            >
+              <LabReports />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admissions"
+          element={
+            <ProtectedRoute
+              allowedRoles={["ADMIN"]}
+            >
+              <Admissions />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/billing"
           element={
             <ProtectedRoute
               allowedRoles={["ADMIN"]}
             >
               <Billing />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/audit-logs"
+          element={
+            <ProtectedRoute
+              allowedRoles={["ADMIN"]}
+            >
+              <AuditLogs />
             </ProtectedRoute>
           }
         />
