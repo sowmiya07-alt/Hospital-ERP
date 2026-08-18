@@ -8,6 +8,7 @@ import { getAppointments } from "../services/appointmentService";
 import { getMedicines } from "../services/medicineService";
 import { getPrescriptions } from "../services/prescriptionService";
 import { getBillings } from "../services/billingService";
+import { formatTime12Hour } from "../utils/timeUtils";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -298,7 +299,7 @@ function Dashboard() {
                             <td>{a.patient?.name || "N/A"}</td>
                             <td>{a.doctor?.name || "N/A"}</td>
                             <td>{a.appointmentDate}</td>
-                            <td>{a.appointmentTime}</td>
+                            <td>{formatTime12Hour(a.appointmentTime)}</td>
                             <td>
                               <span className={`badge ${getStatusBadge(a.status)}`}>
                                 {a.status || "Scheduled"}
