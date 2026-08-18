@@ -66,17 +66,16 @@ public class DataSeeder implements CommandLineRunner {
             doc2 = doctorRepository.save(doc2);
             doc3 = doctorRepository.save(doc3);
 
-            createDoctorUser("sarah", "doctor123", doc1);
-            createDoctorUser("rajesh", "doctor123", doc2);
-            createDoctorUser("elena", "doctor123", doc3);
+            createDoctorUser("sarah", "sarah123", doc1);
+            createDoctorUser("rajesh", "rajesh123", doc2);
+            createDoctorUser("elena", "elena123", doc3);
 
             System.out.println(">>> Seeded default doctors and logins");
         } else {
-            // Ensure usernames are updated if seeded previously
             doctorRepository.findAll().forEach(doc -> {
-                if ("Dr. Sarah Jenkins".equalsIgnoreCase(doc.getName())) createDoctorUser("sarah", "doctor123", doc);
-                if ("Dr. Rajesh Kumar".equalsIgnoreCase(doc.getName())) createDoctorUser("rajesh", "doctor123", doc);
-                if ("Dr. Elena Rostova".equalsIgnoreCase(doc.getName())) createDoctorUser("elena", "doctor123", doc);
+                if ("Dr. Sarah Jenkins".equalsIgnoreCase(doc.getName())) createDoctorUser("sarah", "sarah123", doc);
+                if ("Dr. Rajesh Kumar".equalsIgnoreCase(doc.getName())) createDoctorUser("rajesh", "rajesh123", doc);
+                if ("Dr. Elena Rostova".equalsIgnoreCase(doc.getName())) createDoctorUser("elena", "elena123", doc);
             });
         }
 
@@ -90,17 +89,16 @@ public class DataSeeder implements CommandLineRunner {
             p2 = patientRepository.save(p2);
             p3 = patientRepository.save(p3);
 
-            createPatientUser("john", "patient123", p1);
-            createPatientUser("emily", "patient123", p2);
-            createPatientUser("michael", "patient123", p3);
+            createPatientUser("john", "john123", p1);
+            createPatientUser("emily", "emily123", p2);
+            createPatientUser("michael", "michael123", p3);
 
             System.out.println(">>> Seeded default patients and logins");
         } else {
-            // Ensure usernames are updated if seeded previously
             patientRepository.findAll().forEach(p -> {
-                if ("John Doe".equalsIgnoreCase(p.getName())) createPatientUser("john", "patient123", p);
-                if ("Emily Watson".equalsIgnoreCase(p.getName())) createPatientUser("emily", "patient123", p);
-                if ("Michael Smith".equalsIgnoreCase(p.getName())) createPatientUser("michael", "patient123", p);
+                if ("John Doe".equalsIgnoreCase(p.getName())) createPatientUser("john", "john123", p);
+                if ("Emily Watson".equalsIgnoreCase(p.getName())) createPatientUser("emily", "emily123", p);
+                if ("Michael Smith".equalsIgnoreCase(p.getName())) createPatientUser("michael", "michael123", p);
             });
         }
 
@@ -117,24 +115,20 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void createDoctorUser(String username, String rawPassword, Doctor doctor) {
-        if (userRepository.findByUsername(username).isEmpty()) {
-            User user = new User();
-            user.setUsername(username);
-            user.setPassword(passwordEncoder.encode(rawPassword));
-            user.setRole("DOCTOR");
-            user.setDoctor(doctor);
-            userRepository.save(user);
-        }
+        User user = userRepository.findByUsername(username).orElse(new User());
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        user.setRole("DOCTOR");
+        user.setDoctor(doctor);
+        userRepository.save(user);
     }
 
     private void createPatientUser(String username, String rawPassword, Patient patient) {
-        if (userRepository.findByUsername(username).isEmpty()) {
-            User user = new User();
-            user.setUsername(username);
-            user.setPassword(passwordEncoder.encode(rawPassword));
-            user.setRole("PATIENT");
-            user.setPatient(patient);
-            userRepository.save(user);
-        }
+        User user = userRepository.findByUsername(username).orElse(new User());
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        user.setRole("PATIENT");
+        user.setPatient(patient);
+        userRepository.save(user);
     }
 }
