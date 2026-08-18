@@ -10,6 +10,7 @@ import {
 
 import { getPatients } from "../services/patientService";
 import { getDoctors } from "../services/doctorService";
+import { TIME_SLOTS, formatTime12Hour } from "../utils/timeUtils";
 
 function Appointments() {
   const [appointments, setAppointments] = useState([]);
@@ -325,12 +326,11 @@ function Appointments() {
           />
 
           <label className="form-label">
-            Appointment Time
+            Appointment Time (12-Hour AM/PM)
           </label>
 
-          <input
-            type="time"
-            className="form-control mb-3"
+          <select
+            className="form-select mb-3"
             value={appointment.appointmentTime}
             onChange={(e) =>
               setAppointment({
@@ -338,7 +338,16 @@ function Appointments() {
                 appointmentTime: e.target.value,
               })
             }
-          />
+          >
+            <option value="">
+              Select Time Slot (e.g. 02:00 PM)
+            </option>
+            {TIME_SLOTS.map((slot) => (
+              <option key={slot} value={slot}>
+                {slot}
+              </option>
+            ))}
+          </select>
 
           <label className="form-label">
             Status
@@ -505,7 +514,7 @@ function Appointments() {
                     </td>
 
                     <td>
-                      {a.appointmentTime}
+                      {formatTime12Hour(a.appointmentTime)}
                     </td>
 
                     <td>

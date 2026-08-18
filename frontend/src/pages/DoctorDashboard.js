@@ -13,6 +13,7 @@ import {
 
 import { getMedicines } from "../services/medicineService";
 import { saveConsultation } from "../services/consultationService";
+import { formatTime12Hour } from "../utils/timeUtils";
 
 function DoctorDashboard() {
   const navigate = useNavigate();
@@ -655,10 +656,9 @@ function DoctorDashboard() {
                             </td>
 
                             <td>
-                              {
-                                appointment
-                                  .appointmentTime
-                              }
+                              {formatTime12Hour(
+                                appointment.appointmentTime
+                              )}
                             </td>
 
                             <td>
@@ -1115,7 +1115,7 @@ function DoctorDashboard() {
 
                 <div className="modal-body">
                   <div className="alert alert-light border mb-3">
-                    <strong>Appointment Details:</strong> Date: {activeConsultationAppt.appointmentDate} | Time: {activeConsultationAppt.appointmentTime}
+                    <strong>Appointment Details:</strong> Date: {activeConsultationAppt.appointmentDate} | Time: {formatTime12Hour(activeConsultationAppt.appointmentTime)}
                   </div>
 
                   <div className="row g-3">
