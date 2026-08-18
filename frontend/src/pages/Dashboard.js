@@ -3,6 +3,13 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { getDashboardSummary } from "../services/dashboardService";
 import { formatTime12Hour } from "../utils/timeUtils";
+import { getPatients } from "../services/patientService";
+import { getDoctors } from "../services/doctorService";
+import { getAppointments } from "../services/appointmentService";
+import { getMedicines } from "../services/medicineService";
+import { getBillings } from "../services/billingService";
+import { getLabReports } from "../services/labReportService";
+import { getAdmissions } from "../services/admissionService";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -17,13 +24,91 @@ function Dashboard() {
     setError(null);
     try {
       const res = await getDashboardSummary();
-      setData(res.data);
+      if (res && res.data) {
+        setData(res.data);
+      } else {
+        throw new Error("Invalid response format");
+      }
+    } catch (err) {
+      console.log("Dashboard summary API failed, using fallback REST services:", err);
+      try {
+        const [
+          patientsRes,
+          doctorsRes,
+          appointmentsRes,
+          medicinesRes,
+          billingsRes,
+          labsRes,
+          admissionsRes,
+        ] = await Promise.allSettled([
+          getPatients(),
+          getDoctors(),
+          getAppointments(),
+          getMedicines(),
+          getBillings(),
+          getLabReports(),
+          getAdmissions(),
+        ]);
+
+        const patients = patientsRes.status === "fulfilled" ? (patientsRes.value.data || []) : [];
+        const doctors = doctorsRes.status === "fulfilled" ? (doctorsRes.value.data || []) : [];
+        const appointments = appointmentsRes.status === "fulfilled" ? (appointmentsRes.value.data || []) : [];
+        const medicines = medicinesRes.status === "fulfilled" ? (medicinesRes.value.data || []) : [];
+        const billings = billingsRes.status === "fulfilled" ? (billingsRes.value.data || []) : [];
+        const labs = labsRes.status === "fulfilled" ? (labsRes.value.data || []) : [];
+        const admissions = admissionsRes.status === "fulfilled" ? (admissionsRes.value.data || []) : [];
+
+        let revenueToday = 0;
+        let totalRev = 0;
+        let pendingB = 0;
+
+        billings.forEach((b) => {
+          const amt = Number(b.amount || b.totalAmount || 0);
+          const paid = Number(b.paidAmount || (b.paymentStatus === "Paid" ? amt : 0));
+          totalRev += paid;
+          if (b.paymentStatus !== "Paid") pendingB++;
+        });
+        revenueToday = totalRev;
+
+        const lowStock = medicines.filter((m) => Number(m.stock || 0) <= Number(m.reorderLevel || 15)).length;
+        const waitingCount = appointments.filter((a) => a.status === "Waiting" || a.status === "CHECKED_IN" || a.status === "Checked-In").length;
+        const inConsultCount = appointments.filter((a) => a.status === "In Consultation" || a.status === "IN_CONSULTATION").length;
+        const completedCount = appointments.filter((a) => a.status === "Completed" || a.status === "COMPLETED").length;
+        const pendingLabsCount = labs.filter((l) => l.status !== "COMPLETED" && l.status !== "CANCELLED").length;
+        const activeAdmCount = admissions.filter((a) => a.status === "ADMITTED").length;
+
+        setData({
+          totalPatients: patients.length,
+          totalDoctors: doctors.length,
+          totalAppointments: appointments.length,
+          todayAppointmentsCount: appointments.length,
+          waitingPatients: waitingCount,
+          inConsultation: inConsultCount,
+          completedToday: completedCount,
+          pendingBills: pendingB,
+          revenueToday: revenueToday,
+          totalRevenue: totalRev,
+          totalMedicines: medicines.length,
+          lowStockCount: lowStock,
+          pendingLabsCount: pendingLabsCount,
+          activeAdmissionsCount: activeAdmCount,
+          patientFlow: {
+            registeredToday: patients.length,
+            checkedIn: appointments.filter((a) => a.status === "CHECKED_IN").length,
+            waiting: waitingCount,
+            inConsultation: inConsultCount,
+            completed: completedCount,
+            discharged: admissions.filter((a) => a.status === "DISCHARGED").length,
+          },
+          todayAppointments: appointments.slice(0, 10),
+        });
+      } catch (fallbackErr) {
+        console.error("Fallback load failed:", fallbackErr);
+        setError("Unable to load dashboard data. Please verify backend connection.");
+      }
+    } finally {
       const now = new Date();
       setLastUpdated(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-    } catch (err) {
-      console.error("Failed to load dashboard summary:", err);
-      setError("Unable to load dashboard data. Please check connection and try again.");
-    } finally {
       setLoading(false);
     }
   }, []);

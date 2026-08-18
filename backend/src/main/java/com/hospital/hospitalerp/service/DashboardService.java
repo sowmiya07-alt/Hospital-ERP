@@ -75,8 +75,9 @@ public class DashboardService {
         long pendingBillsCount = 0;
 
         for (Billing b : allBillings) {
-            double paid = b.getPaidAmount() != null ? b.getPaidAmount() : ("Paid".equalsIgnoreCase(b.getPaymentStatus()) ? b.getAmount() : 0.0);
-            double total = b.getTotalAmount() != null ? b.getTotalAmount() : b.getAmount();
+            double amountVal = b.getAmount() != null ? b.getAmount() : 0.0;
+            double paid = b.getPaidAmount() != null ? b.getPaidAmount() : ("Paid".equalsIgnoreCase(b.getPaymentStatus()) ? amountVal : 0.0);
+            double total = b.getTotalAmount() != null ? b.getTotalAmount() : amountVal;
             totalRevenue += paid;
 
             if (b.getPaymentDate() != null && b.getPaymentDate().equals(todayStr)) {
@@ -94,7 +95,7 @@ public class DashboardService {
 
         // 3. Needs Attention Items
         List<Medicine> lowStockMedicines = allMedicines.stream()
-                .filter(m -> m.getStock() <= (m.getReorderLevel() != null ? m.getReorderLevel() : 15))
+                .filter(m -> m.getStock() != null && m.getStock() <= (m.getReorderLevel() != null ? m.getReorderLevel() : 15))
                 .collect(Collectors.toList());
 
         long pendingLabs = allLabs.stream()
