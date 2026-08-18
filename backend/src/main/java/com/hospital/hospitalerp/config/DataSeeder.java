@@ -66,11 +66,18 @@ public class DataSeeder implements CommandLineRunner {
             doc2 = doctorRepository.save(doc2);
             doc3 = doctorRepository.save(doc3);
 
-            createDoctorUser("doctor1", "doctor123", doc1);
-            createDoctorUser("doctor2", "doctor123", doc2);
-            createDoctorUser("doctor3", "doctor123", doc3);
+            createDoctorUser("sarah", "doctor123", doc1);
+            createDoctorUser("rajesh", "doctor123", doc2);
+            createDoctorUser("elena", "doctor123", doc3);
 
             System.out.println(">>> Seeded default doctors and logins");
+        } else {
+            // Ensure usernames are updated if seeded previously
+            doctorRepository.findAll().forEach(doc -> {
+                if ("Dr. Sarah Jenkins".equalsIgnoreCase(doc.getName())) createDoctorUser("sarah", "doctor123", doc);
+                if ("Dr. Rajesh Kumar".equalsIgnoreCase(doc.getName())) createDoctorUser("rajesh", "doctor123", doc);
+                if ("Dr. Elena Rostova".equalsIgnoreCase(doc.getName())) createDoctorUser("elena", "doctor123", doc);
+            });
         }
 
         // 3. Seed Patients if empty
@@ -83,11 +90,18 @@ public class DataSeeder implements CommandLineRunner {
             p2 = patientRepository.save(p2);
             p3 = patientRepository.save(p3);
 
-            createPatientUser("patient1", "patient123", p1);
-            createPatientUser("patient2", "patient123", p2);
-            createPatientUser("patient3", "patient123", p3);
+            createPatientUser("john", "patient123", p1);
+            createPatientUser("emily", "patient123", p2);
+            createPatientUser("michael", "patient123", p3);
 
             System.out.println(">>> Seeded default patients and logins");
+        } else {
+            // Ensure usernames are updated if seeded previously
+            patientRepository.findAll().forEach(p -> {
+                if ("John Doe".equalsIgnoreCase(p.getName())) createPatientUser("john", "patient123", p);
+                if ("Emily Watson".equalsIgnoreCase(p.getName())) createPatientUser("emily", "patient123", p);
+                if ("Michael Smith".equalsIgnoreCase(p.getName())) createPatientUser("michael", "patient123", p);
+            });
         }
 
         // 4. Seed Medicines if empty
