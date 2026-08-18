@@ -50,6 +50,7 @@ public class DoctorService {
         doctorUser.setUsername(username);
         doctorUser.setPassword(encoder.encode(password));
         doctorUser.setRole("DOCTOR");
+        doctorUser.setFirstLoginRequired(true);
 
         doctorUser.setDoctor(savedDoctor);
         doctorUser.setPatient(null);

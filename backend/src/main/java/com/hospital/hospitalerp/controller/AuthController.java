@@ -19,4 +19,18 @@ public class AuthController {
 
         return authService.login(request);
     }
+
+    @PostMapping("/change-password")
+    public com.hospital.hospitalerp.dto.ApiResponse changePassword(
+            @RequestBody com.hospital.hospitalerp.dto.ChangePasswordRequest request) {
+
+        return authService.changePassword(request);
+    }
+
+    @PostMapping("/forgot-password")
+    public com.hospital.hospitalerp.dto.ApiResponse forgotPassword(
+            @RequestBody com.hospital.hospitalerp.dto.ForgotPasswordRequest request) {
+
+        return authService.forgotPassword(request);
+    }
 }

@@ -29,6 +29,17 @@ public class User {
     @JoinColumn(name = "patient_id")
     private Patient patient;
 
+    @Column(name = "first_login_required")
+    private Boolean firstLoginRequired = false;
+
+    public Boolean getFirstLoginRequired() {
+        return firstLoginRequired != null ? firstLoginRequired : false;
+    }
+
+    public void setFirstLoginRequired(Boolean firstLoginRequired) {
+        this.firstLoginRequired = firstLoginRequired;
+    }
+
     // Default Constructor
     public User() {
     }

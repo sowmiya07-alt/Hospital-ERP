@@ -14,4 +14,20 @@ export const loginUser = (loginData) => {
 
 export const registerPatient = (patientData) => {
   return api.post("/auth/register/patient", patientData);
-};
+};
+
+// ============================
+// FORCED FIRST-LOGIN PASSWORD CHANGE
+// ============================
+
+export const changePassword = (data) => {
+  return api.post("/auth/change-password", data);
+};
+
+// ============================
+// FORGOT PASSWORD REQUEST
+// ============================
+
+export const forgotPassword = (data) => {
+  return api.post("/auth/forgot-password", data);
+};
