@@ -1,320 +1,416 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
-
-import { getPatients } from "../services/patientService";
-import { getDoctors } from "../services/doctorService";
-import { getAppointments } from "../services/appointmentService";
-import { getMedicines } from "../services/medicineService";
-import { getPrescriptions } from "../services/prescriptionService";
-import { getBillings } from "../services/billingService";
+import { getDashboardSummary } from "../services/dashboardService";
 import { formatTime12Hour } from "../utils/timeUtils";
 
 function Dashboard() {
   const navigate = useNavigate();
 
-  const [counts, setCounts] = useState({
-    patients: 0,
-    doctors: 0,
-    appointments: 0,
-    medicines: 0,
-    prescriptions: 0,
-    billings: 0,
-  });
-
-  const [financials, setFinancials] = useState({
-    totalRevenue: 0,
-    pendingBalance: 0,
-    paidCount: 0,
-  });
-
-  const [lowStockCount, setLowStockCount] = useState(0);
-  const [completionRate, setCompletionRate] = useState(0);
-
-  const [recentAppointments, setRecentAppointments] = useState([]);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState("");
 
-  const loadDashboardData = useCallback(async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
-
+    setError(null);
     try {
-      const [
-        patientResponse,
-        doctorResponse,
-        appointmentResponse,
-        medicineResponse,
-        prescriptionResponse,
-        billingResponse,
-      ] = await Promise.all([
-        getPatients(),
-        getDoctors(),
-        getAppointments(),
-        getMedicines(),
-        getPrescriptions(),
-        getBillings(),
-      ]);
-
-      const patientList = patientResponse.data || [];
-      const doctorList = doctorResponse.data || [];
-      const appointmentList = appointmentResponse.data || [];
-      const medicineList = medicineResponse.data || [];
-      const prescriptionList = prescriptionResponse.data || [];
-      const billingList = billingResponse.data || [];
-
-      setCounts({
-        patients: patientList.length,
-        doctors: doctorList.length,
-        appointments: appointmentList.length,
-        medicines: medicineList.length,
-        prescriptions: prescriptionList.length,
-        billings: billingList.length,
-      });
-
-      // Calculate financials
-      let revenue = 0;
-      let pending = 0;
-      let paidBills = 0;
-
-      billingList.forEach((b) => {
-        const paid = Number(b.paidAmount || (b.paymentStatus === "Paid" ? b.amount : 0));
-        const total = Number(b.totalAmount || b.amount || 0);
-        revenue += paid;
-        if (b.paymentStatus !== "Paid") {
-          pending += Math.max(0, total - paid);
-        } else {
-          paidBills++;
-        }
-      });
-
-      setFinancials({
-        totalRevenue: revenue,
-        pendingBalance: pending,
-        paidCount: paidBills,
-      });
-
-      // Calculate low stock items
-      const lowStock = medicineList.filter((m) => Number(m.stock || 0) <= Number(m.reorderLevel || 15)).length;
-      setLowStockCount(lowStock);
-
-      // Calculate appointment completion rate
-      const completedCount = appointmentList.filter((a) => a.status === "Completed").length;
-      const rate = appointmentList.length > 0 ? Math.round((completedCount / appointmentList.length) * 100) : 0;
-      setCompletionRate(rate);
-
-      setRecentAppointments(
-        [...appointmentList]
-          .sort((a, b) => b.id - a.id)
-          .slice(0, 5)
-      );
-    } catch (error) {
-      console.log("Dashboard Load Error:", error);
+      const res = await getDashboardSummary();
+      setData(res.data);
+      const now = new Date();
+      setLastUpdated(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    } catch (err) {
+      console.error("Failed to load dashboard summary:", err);
+      setError("Unable to load dashboard data. Please check connection and try again.");
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadDashboardData();
-  }, [loadDashboardData]);
+    loadData();
+  }, [loadData]);
 
-  const cards = [
-    {
-      title: "Patients",
-      count: counts.patients,
-      path: "/patients",
-      icon: "👥",
-      description: "Registered medical patients",
-    },
-    {
-      title: "Doctors",
-      count: counts.doctors,
-      path: "/doctors",
-      icon: "👨‍⚕️",
-      description: "Active medical specialists",
-    },
-    {
-      title: "Appointments",
-      count: counts.appointments,
-      path: "/appointments",
-      icon: "📅",
-      description: `${completionRate}% completed rate`,
-    },
-    {
-      title: "Medicines",
-      count: counts.medicines,
-      path: "/medicines",
-      icon: "💊",
-      description: lowStockCount > 0 ? `⚠️ ${lowStockCount} low-stock item(s)` : "Stock healthy",
-    },
-    {
-      title: "Prescriptions",
-      count: counts.prescriptions,
-      path: "/prescriptions",
-      icon: "📋",
-      description: "Clinical prescription logs",
-    },
-    {
-      title: "Hospital Billing",
-      count: counts.billings,
-      path: "/billing",
-      icon: "💳",
-      description: `$${financials.totalRevenue.toFixed(2)} collected`,
-    },
-  ];
+  const todayDateStr = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 
-  const getStatusBadge = (status) => {
-    if (status === "Completed") return "bg-success";
-    if (status === "Cancelled") return "bg-danger";
-    return "bg-warning text-dark";
+  const getStatusBadgeClass = (status) => {
+    const s = (status || "").toUpperCase();
+    if (s === "COMPLETED") return "bg-success";
+    if (s === "IN_CONSULTATION" || s === "IN CONSULTATION") return "bg-primary";
+    if (s === "WAITING" || s === "CHECKED_IN" || s === "SCHEDULED") return "bg-warning";
+    if (s === "CANCELLED") return "bg-danger";
+    return "bg-secondary";
   };
 
   return (
-    <div className="d-flex">
+    <div className="d-flex" style={{ background: "#f8fafc", minHeight: "100vh" }}>
       <Sidebar />
 
-      <div className="container-fluid p-4">
-        {/* DASHBOARD HEADER */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="flex-grow-1 p-4" style={{ maxWidth: "1400px", margin: "0 auto" }}>
+        
+        {/* TOP HEADER */}
+        <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
           <div>
-            <h2 className="mb-1">🏥 Hospital Enterprise ERP Executive Dashboard</h2>
-            <p className="text-muted mb-0">Real-time analytical metrics, clinical operations, and financial overview</p>
+            <h3 className="fw-bold mb-1" style={{ color: "#0f172a", letterSpacing: "-0.5px" }}>
+              Hospital Operations Dashboard
+            </h3>
+            <p className="text-muted small mb-0">
+              Today's overview of patients, appointments, clinical activity and billing
+            </p>
           </div>
-          <button className="btn btn-outline-primary" onClick={loadDashboardData}>
-            ↻ Refresh Real-Time Data
-          </button>
-        </div>
 
-        {/* FINANCIAL & ALERT HIGHLIGHTS */}
-        <div className="row mb-4">
-          <div className="col-md-4 mb-3 mb-md-0">
-            <div className="card bg-primary text-white shadow p-3">
-              <h6>Total Hospital Revenue Collected</h6>
-              <h2 className="fw-bold">${financials.totalRevenue.toFixed(2)}</h2>
-              <small>{financials.paidCount} fully paid invoice(s)</small>
+          <div className="d-flex align-items-center gap-3 text-end">
+            <div>
+              <div className="fw-semibold small text-dark">{todayDateStr}</div>
+              <div className="text-muted" style={{ fontSize: "11px" }}>
+                {lastUpdated ? `Last updated: ${lastUpdated}` : "Updating..."}
+              </div>
             </div>
-          </div>
-          <div className="col-md-4 mb-3 mb-md-0">
-            <div className="card bg-warning text-dark shadow p-3">
-              <h6>Pending Accounts Receivable</h6>
-              <h2 className="fw-bold">${financials.pendingBalance.toFixed(2)}</h2>
-              <small>Outstanding balance due</small>
-            </div>
-          </div>
-          <div className="col-md-4">
-            <div className="card bg-info text-white shadow p-3">
-              <h6>Clinical Operations Efficiency</h6>
-              <h2 className="fw-bold">{completionRate}% Completed</h2>
-              <small>Scheduled appointment fulfillment</small>
-            </div>
+            <button
+              className="btn btn-outline-primary btn-sm d-flex align-items-center gap-2 fw-semibold px-3 py-2"
+              onClick={loadData}
+              disabled={loading}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+              </svg>
+              {loading ? "Refreshing..." : "Refresh"}
+            </button>
           </div>
         </div>
 
-        {/* LOADING */}
-        {loading ? (
-          <div className="text-center p-5">
-            <div className="spinner-border text-primary" role="status" />
-            <p className="mt-3 text-muted">Aggregating hospital analytics...</p>
+        {/* ERROR STATE */}
+        {error && (
+          <div className="alert alert-danger d-flex justify-content-between align-items-center rounded-3 mb-4">
+            <div>
+              <strong>Operational Alert:</strong> {error}
+            </div>
+            <button className="btn btn-sm btn-outline-danger fw-bold" onClick={loadData}>
+              Retry
+            </button>
           </div>
-        ) : (
+        )}
+
+        {/* LOADING SKELETON */}
+        {loading && !data ? (
+          <div className="text-center py-5">
+            <div className="spinner-border text-primary mb-3" role="status" style={{ width: "2.5rem", height: "2.5rem" }} />
+            <p className="text-muted small fw-medium">Loading hospital operational metrics...</p>
+          </div>
+        ) : data ? (
           <>
-            {/* DASHBOARD CARDS */}
-            <div className="row">
-              {cards.map((card) => (
-                <div className="col-xl-4 col-md-6 mb-4" key={card.title}>
-                  <div className="card shadow h-100">
-                    <div className="card-body p-4">
-                      <div className="d-flex justify-content-between align-items-start">
-                        <div>
-                          <p className="text-muted mb-1">{card.title}</p>
-                          <h1 className="fw-bold mb-1">{card.count}</h1>
-                          <small className="text-muted">{card.description}</small>
+            {/* TODAY'S OVERVIEW KPI CARDS */}
+            <div className="mb-4">
+              <h6 className="fw-bold text-uppercase text-secondary mb-3" style={{ fontSize: "12px", letterSpacing: "0.5px" }}>
+                Today's Overview
+              </h6>
+              <div className="row g-3">
+                <div className="col-md-2 col-6">
+                  <div className="card p-3 border-0 bg-white shadow-sm">
+                    <div className="text-muted small fw-semibold">Today's Appointments</div>
+                    <div className="fs-3 fw-bold text-dark mt-1">{data.todayAppointmentsCount || 0}</div>
+                    <div className="text-muted" style={{ fontSize: "11px" }}>Scheduled today</div>
+                  </div>
+                </div>
+
+                <div className="col-md-2 col-6">
+                  <div className="card p-3 border-0 bg-white shadow-sm">
+                    <div className="text-muted small fw-semibold">Patients Waiting</div>
+                    <div className="fs-3 fw-bold text-warning mt-1">{data.waitingPatients || 0}</div>
+                    <div className="text-muted" style={{ fontSize: "11px" }}>In waiting lounge</div>
+                  </div>
+                </div>
+
+                <div className="col-md-2 col-6">
+                  <div className="card p-3 border-0 bg-white shadow-sm">
+                    <div className="text-muted small fw-semibold">In Consultation</div>
+                    <div className="fs-3 fw-bold text-primary mt-1">{data.inConsultation || 0}</div>
+                    <div className="text-muted" style={{ fontSize: "11px" }}>Doctor examining</div>
+                  </div>
+                </div>
+
+                <div className="col-md-2 col-6">
+                  <div className="card p-3 border-0 bg-white shadow-sm">
+                    <div className="text-muted small fw-semibold">Completed Today</div>
+                    <div className="fs-3 fw-bold text-success mt-1">{data.completedToday || 0}</div>
+                    <div className="text-muted" style={{ fontSize: "11px" }}>Consultations done</div>
+                  </div>
+                </div>
+
+                <div className="col-md-2 col-6">
+                  <div className="card p-3 border-0 bg-white shadow-sm">
+                    <div className="text-muted small fw-semibold">Pending Bills</div>
+                    <div className="fs-3 fw-bold text-danger mt-1">{data.pendingBills || 0}</div>
+                    <div className="text-muted" style={{ fontSize: "11px" }}>Unpaid invoices</div>
+                  </div>
+                </div>
+
+                <div className="col-md-2 col-6">
+                  <div className="card p-3 border-0 bg-white shadow-sm">
+                    <div className="text-muted small fw-semibold">Revenue Today</div>
+                    <div className="fs-3 fw-bold text-dark mt-1">₹{Number(data.revenueToday || 0).toLocaleString()}</div>
+                    <div className="text-muted" style={{ fontSize: "11px" }}>Total collected</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* PATIENT FLOW TODAY & NEEDS ATTENTION */}
+            <div className="row g-4 mb-4">
+              {/* PATIENT FLOW TODAY */}
+              <div className="col-md-7">
+                <div className="card border-0 bg-white shadow-sm p-4 h-100">
+                  <h6 className="fw-bold text-dark mb-3">Patient Flow Today</h6>
+                  
+                  <div className="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded-3">
+                    <div className="text-center px-2">
+                      <div className="text-muted small">Registered</div>
+                      <div className="fw-bold fs-5 text-dark">{data.patientFlow?.registeredToday || 0}</div>
+                    </div>
+                    <div className="text-muted">➔</div>
+                    <div className="text-center px-2">
+                      <div className="text-muted small">Checked In</div>
+                      <div className="fw-bold fs-5 text-info">{data.patientFlow?.checkedIn || 0}</div>
+                    </div>
+                    <div className="text-muted">➔</div>
+                    <div className="text-center px-2">
+                      <div className="text-muted small">Waiting</div>
+                      <div className="fw-bold fs-5 text-warning">{data.patientFlow?.waiting || 0}</div>
+                    </div>
+                    <div className="text-muted">➔</div>
+                    <div className="text-center px-2">
+                      <div className="text-muted small">Consultation</div>
+                      <div className="fw-bold fs-5 text-primary">{data.patientFlow?.inConsultation || 0}</div>
+                    </div>
+                    <div className="text-muted">➔</div>
+                    <div className="text-center px-2">
+                      <div className="text-muted small">Completed</div>
+                      <div className="fw-bold fs-5 text-success">{data.patientFlow?.completed || 0}</div>
+                    </div>
+                  </div>
+
+                  <small className="text-muted">
+                    Live progression tracking patient journey from reception check-in to consultation completion.
+                  </small>
+                </div>
+              </div>
+
+              {/* NEEDS ATTENTION PANEL */}
+              <div className="col-md-5">
+                <div className="card border-0 bg-white shadow-sm p-4 h-100">
+                  <h6 className="fw-bold text-dark mb-3">Needs Attention</h6>
+
+                  <div className="d-flex flex-column gap-2">
+                    {/* LOW MEDICINE STOCK */}
+                    <div className={`p-3 rounded-3 border d-flex justify-content-between align-items-center ${data.lowStockCount > 0 ? 'bg-danger-subtle border-danger-subtle' : 'bg-light border-light'}`}>
+                      <div>
+                        <div className="fw-semibold small text-dark">
+                          {data.lowStockCount > 0 ? `⚠️ Low Medicine Stock` : `Pharmacy Stock Healthy`}
                         </div>
-                        <div
-                          style={{
-                            fontSize: "35px",
-                            background: "#f1f3f5",
-                            width: "65px",
-                            height: "65px",
-                            borderRadius: "12px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          {card.icon}
+                        <div className="small text-muted">
+                          {data.lowStockCount > 0 ? `${data.lowStockCount} item(s) below reorder level` : `All medicines above threshold`}
                         </div>
                       </div>
-                      <hr />
-                      <button
-                        className="btn btn-outline-primary btn-sm"
-                        onClick={() => navigate(card.path)}
-                      >
-                        Manage {card.title} →
+                      <button className="btn btn-outline-dark btn-sm fw-semibold" onClick={() => navigate('/medicines')}>
+                        View Pharmacy →
+                      </button>
+                    </div>
+
+                    {/* PENDING PAYMENTS */}
+                    <div className={`p-3 rounded-3 border d-flex justify-content-between align-items-center ${data.pendingBills > 0 ? 'bg-warning-subtle border-warning-subtle' : 'bg-light border-light'}`}>
+                      <div>
+                        <div className="fw-semibold small text-dark">
+                          {data.pendingBills > 0 ? `Pending Invoices` : `Invoices Up to Date`}
+                        </div>
+                        <div className="small text-muted">
+                          {data.pendingBills > 0 ? `${data.pendingBills} invoice(s) with outstanding balance` : `No pending payments`}
+                        </div>
+                      </div>
+                      <button className="btn btn-outline-dark btn-sm fw-semibold" onClick={() => navigate('/billing')}>
+                        View Billing →
+                      </button>
+                    </div>
+
+                    {/* WAITING PATIENTS */}
+                    <div className={`p-3 rounded-3 border d-flex justify-content-between align-items-center ${data.waitingPatients > 0 ? 'bg-info-subtle border-info-subtle' : 'bg-light border-light'}`}>
+                      <div>
+                        <div className="fw-semibold small text-dark">
+                          {data.waitingPatients > 0 ? `Patients Waiting` : `No Patient Delay`}
+                        </div>
+                        <div className="small text-muted">
+                          {data.waitingPatients > 0 ? `${data.waitingPatients} patient(s) ready for consultation` : `Queue clear`}
+                        </div>
+                      </div>
+                      <button className="btn btn-outline-dark btn-sm fw-semibold" onClick={() => navigate('/appointments')}>
+                        View Appointments →
                       </button>
                     </div>
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
 
-            {/* RECENT APPOINTMENTS */}
-            <div className="card shadow mt-2">
-              <div className="card-body p-4">
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                  <div>
-                    <h4 className="mb-1">Recent Hospital Appointments</h4>
-                    <small className="text-muted">Latest 5 appointment bookings</small>
-                  </div>
-                  <button
-                    className="btn btn-outline-primary btn-sm"
-                    onClick={() => navigate("/appointments")}
-                  >
-                    View All Appointments
-                  </button>
+            {/* TODAY'S APPOINTMENTS TABLE */}
+            <div className="card border-0 bg-white shadow-sm p-4 mb-4">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <h6 className="fw-bold text-dark mb-0">Today's Appointments</h6>
+                  <small className="text-muted">Live scheduled patient consultations</small>
                 </div>
+                <button className="btn btn-link text-primary text-decoration-none fw-semibold p-0 small" onClick={() => navigate('/appointments')}>
+                  View all appointments →
+                </button>
+              </div>
 
-                <div className="table-responsive">
-                  <table className="table table-hover table-striped align-middle mb-0">
-                    <thead className="table-dark">
+              <div className="table-responsive">
+                <table className="table table-hover align-middle mb-0" style={{ fontSize: "13.5px" }}>
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Patient</th>
+                      <th>Doctor</th>
+                      <th>Department</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {!data.todayAppointments || data.todayAppointments.length === 0 ? (
                       <tr>
-                        <th>ID</th>
-                        <th>Patient</th>
-                        <th>Doctor</th>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>Status</th>
+                        <td colSpan="5" className="text-center py-4 text-muted">
+                          No appointments scheduled for today.
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {recentAppointments.length === 0 ? (
-                        <tr>
-                          <td colSpan="6" className="text-center py-4 text-muted">
-                            No Appointments Found
+                    ) : (
+                      data.todayAppointments.map((a) => (
+                        <tr key={a.id}>
+                          <td><strong>{formatTime12Hour(a.appointmentTime)}</strong></td>
+                          <td>{a.patient?.name || "N/A"}</td>
+                          <td>{a.doctor?.name || "N/A"}</td>
+                          <td>{a.doctor?.department?.name || a.doctor?.specialization || "General"}</td>
+                          <td>
+                            <span className={`badge ${getStatusBadgeClass(a.status)}`}>
+                              {a.status || "Scheduled"}
+                            </span>
                           </td>
                         </tr>
-                      ) : (
-                        recentAppointments.map((a) => (
-                          <tr key={a.id}>
-                            <td><strong>#{a.id}</strong></td>
-                            <td>{a.patient?.name || "N/A"}</td>
-                            <td>{a.doctor?.name || "N/A"}</td>
-                            <td>{a.appointmentDate}</td>
-                            <td>{formatTime12Hour(a.appointmentTime)}</td>
-                            <td>
-                              <span className={`badge ${getStatusBadge(a.status)}`}>
-                                {a.status || "Scheduled"}
-                              </span>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* QUICK ACCESS MODULES */}
+            <div>
+              <h6 className="fw-bold text-uppercase text-secondary mb-3" style={{ fontSize: "12px", letterSpacing: "0.5px" }}>
+                Quick Access Hospital Modules
+              </h6>
+              <div className="row g-3">
+                <div className="col-md-3 col-6">
+                  <div className="card p-3 border-0 bg-white shadow-sm cursor-pointer" onClick={() => navigate('/patients')} style={{ cursor: 'pointer' }}>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <div className="fw-bold text-dark">Patients</div>
+                        <div className="small text-muted">{data.totalPatients || 0} registered</div>
+                      </div>
+                      <span className="text-primary fw-bold">→</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-md-3 col-6">
+                  <div className="card p-3 border-0 bg-white shadow-sm cursor-pointer" onClick={() => navigate('/doctors')} style={{ cursor: 'pointer' }}>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <div className="fw-bold text-dark">Doctors</div>
+                        <div className="small text-muted">{data.totalDoctors || 0} active specialists</div>
+                      </div>
+                      <span className="text-primary fw-bold">→</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-md-3 col-6">
+                  <div className="card p-3 border-0 bg-white shadow-sm cursor-pointer" onClick={() => navigate('/appointments')} style={{ cursor: 'pointer' }}>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <div className="fw-bold text-dark">Appointments</div>
+                        <div className="small text-muted">{data.totalAppointments || 0} total records</div>
+                      </div>
+                      <span className="text-primary fw-bold">→</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-md-3 col-6">
+                  <div className="card p-3 border-0 bg-white shadow-sm cursor-pointer" onClick={() => navigate('/medicines')} style={{ cursor: 'pointer' }}>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <div className="fw-bold text-dark">Pharmacy</div>
+                        <div className="small text-muted">{data.totalMedicines || 0} catalog items</div>
+                      </div>
+                      <span className="text-primary fw-bold">→</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-md-3 col-6">
+                  <div className="card p-3 border-0 bg-white shadow-sm cursor-pointer" onClick={() => navigate('/labs')} style={{ cursor: 'pointer' }}>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <div className="fw-bold text-dark">Laboratory</div>
+                        <div className="small text-muted">{data.pendingLabsCount || 0} pending tests</div>
+                      </div>
+                      <span className="text-primary fw-bold">→</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-md-3 col-6">
+                  <div className="card p-3 border-0 bg-white shadow-sm cursor-pointer" onClick={() => navigate('/admissions')} style={{ cursor: 'pointer' }}>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <div className="fw-bold text-dark">Admissions & Beds</div>
+                        <div className="small text-muted">{data.activeAdmissionsCount || 0} active inpatients</div>
+                      </div>
+                      <span className="text-primary fw-bold">→</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-md-3 col-6">
+                  <div className="card p-3 border-0 bg-white shadow-sm cursor-pointer" onClick={() => navigate('/billing')} style={{ cursor: 'pointer' }}>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <div className="fw-bold text-dark">Billing</div>
+                        <div className="small text-muted">₹{Number(data.totalRevenue || 0).toLocaleString()} total</div>
+                      </div>
+                      <span className="text-primary fw-bold">→</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-md-3 col-6">
+                  <div className="card p-3 border-0 bg-white shadow-sm cursor-pointer" onClick={() => navigate('/audit-logs')} style={{ cursor: 'pointer' }}>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <div className="fw-bold text-dark">Audit Logs</div>
+                        <div className="small text-muted">Security event trail</div>
+                      </div>
+                      <span className="text-primary fw-bold">→</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </>
-        )}
+        ) : null}
       </div>
     </div>
   );
