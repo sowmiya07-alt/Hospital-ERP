@@ -24,6 +24,10 @@ public class Billing {
     private Double paidAmount = 0.0;
     private Double balanceAmount = 0.0;
 
+    private Double amount = 0.0;
+    private String paymentStatus = "Pending";
+    private String paymentDate;
+
     // CASH, CARD, UPI, INSURANCE
     private String paymentMode = "CASH";
 

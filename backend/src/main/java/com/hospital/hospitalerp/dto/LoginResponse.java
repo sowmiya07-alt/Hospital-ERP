@@ -8,6 +8,7 @@ public class LoginResponse {
     private String role;
     private Long doctorId;
     private Long patientId;
+    private boolean firstLoginRequired;
 
     public LoginResponse() {
     }
@@ -18,7 +19,8 @@ public class LoginResponse {
             String username,
             String role,
             Long doctorId,
-            Long patientId) {
+            Long patientId,
+            boolean firstLoginRequired) {
 
         this.success = success;
         this.message = message;
@@ -26,6 +28,7 @@ public class LoginResponse {
         this.role = role;
         this.doctorId = doctorId;
         this.patientId = patientId;
+        this.firstLoginRequired = firstLoginRequired;
     }
 
     public boolean isSuccess() {
@@ -74,5 +77,13 @@ public class LoginResponse {
 
     public void setPatientId(Long patientId) {
         this.patientId = patientId;
+    }
+
+    public boolean isFirstLoginRequired() {
+        return firstLoginRequired;
+    }
+
+    public void setFirstLoginRequired(boolean firstLoginRequired) {
+        this.firstLoginRequired = firstLoginRequired;
     }
 }
