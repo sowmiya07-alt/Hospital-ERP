@@ -41,12 +41,6 @@ public class BillingService {
                         )
                 );
 
-        if (request.getAmount() == null) {
-            throw new RuntimeException(
-                    "Billing amount is required"
-            );
-        }
-
         Billing billing = new Billing();
         billing.setPatient(patient);
 
@@ -58,7 +52,7 @@ public class BillingService {
         double discount = request.getDiscountAmount() != null ? request.getDiscountAmount() : 0.0;
 
         double baseAmount = request.getAmount() != null ? request.getAmount() : (consult + pharm + room + lab);
-        double total = (baseAmount > 0 ? baseAmount : (consult + pharm + room + lab)) + tax - discount;
+        double total = Math.max(0.0, baseAmount + tax - discount);
         double paid = request.getPaidAmount() != null ? request.getPaidAmount() : 0.0;
 
         billing.setConsultationFee(consult);
