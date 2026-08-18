@@ -113,7 +113,7 @@ function Billing() {
         })
         .catch((error) => {
           console.log("Save Billing Error:", error);
-          alert("Unable to Save Billing");
+          alert(error.response?.data?.message || "Unable to Save Billing");
         });
     } else {
       updateBilling(editingId, billingData)
@@ -124,7 +124,7 @@ function Billing() {
         })
         .catch((error) => {
           console.log("Update Billing Error:", error);
-          alert("Unable to Update Billing");
+          alert(error.response?.data?.message || "Unable to Update Billing");
         });
     }
   };
