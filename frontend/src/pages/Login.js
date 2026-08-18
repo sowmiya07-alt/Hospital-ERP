@@ -55,7 +55,7 @@ function Login() {
         return;
       }
 
-      // Check for role mismatch if user selected a specific portal
+      // Role mismatch check if specific role selected
       if (selectedRole && data.role !== selectedRole) {
         setError(
           `This account is registered as ${data.role}. Please select the ${data.role} Portal to sign in.`
@@ -69,7 +69,6 @@ function Login() {
       localStorage.setItem("username", data.username);
       localStorage.setItem("role", data.role);
 
-      // Redirect according to role
       if (data.role === "ADMIN") {
         navigate("/dashboard");
         return;
@@ -119,118 +118,114 @@ function Login() {
 
   const getRoleDescription = () => {
     if (selectedRole === "DOCTOR")
-      return "Access patient records, log clinical vitals, manage appointments & create multi-item prescriptions.";
+      return "Access patient charts, log clinical vitals, manage appointments & create multi-item prescriptions.";
     if (selectedRole === "PATIENT")
       return "View your medical history, check upcoming appointments, track prescriptions & pay hospital invoices.";
     if (selectedRole === "ADMIN")
-      return "Manage hospital operations, doctors, patients, inventory stock, revenue analytics & system configuration.";
-    return "Sign in to access your hospital management account.";
+      return "Manage hospital operations, doctors, patients, inventory stock, revenue analytics & system config.";
+    return "Sign in to access your hospital account.";
   };
 
   return (
     <div
       style={{
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f766e 100%)",
+        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0d9488 100%)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "40px 20px",
-        fontFamily: "'Segoe UI', Roboto, sans-serif",
+        padding: "24px 16px",
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
     >
       <div
         className="shadow-lg"
         style={{
           width: "100%",
-          maxWidth: selectedRole === null ? "1100px" : "520px",
+          maxWidth: selectedRole === null ? "960px" : "460px",
           background: "#ffffff",
-          borderRadius: "24px",
+          borderRadius: "20px",
           overflow: "hidden",
-          transition: "all 0.3s ease-in-out",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
         }}
       >
         {/* ============================================================ */}
-        {/* VIEW 1: ROLE SELECTION LANDING PAGE                           */}
+        {/* VIEW 1: COMPACT & ATTRACTIVE ROLE SELECTION LANDING PAGE    */}
         {/* ============================================================ */}
         {selectedRole === null ? (
-          <div className="p-5">
-            {/* BRAND HEADER */}
-            <div className="text-center mb-5">
+          <div className="p-4 p-md-5">
+            {/* HEADER */}
+            <div className="text-center mb-4">
               <div
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  width: "80px",
-                  height: "80px",
-                  background: "#e6fffa",
-                  color: "#0d9488",
-                  borderRadius: "20px",
-                  fontSize: "42px",
-                  marginBottom: "16px",
-                  boxShadow: "0 10px 25px -5px rgba(13, 148, 136, 0.2)",
+                  width: "56px",
+                  height: "56px",
+                  background: "#ccfbf1",
+                  borderRadius: "14px",
+                  fontSize: "30px",
+                  marginBottom: "10px",
+                  boxShadow: "0 4px 12px rgba(13, 148, 136, 0.15)",
                 }}
               >
                 🏥
               </div>
-              <h1 className="fw-bold mb-2" style={{ color: "#0f172a", fontSize: "36px" }}>
+              <h2 className="fw-bold mb-1" style={{ color: "#0f172a", fontSize: "26px", letterSpacing: "-0.5px" }}>
                 Hospital ERP
-              </h1>
-              <p className="text-primary fw-semibold mb-2" style={{ fontSize: "18px" }}>
+              </h2>
+              <p className="text-teal fw-semibold mb-1" style={{ color: "#0d9488", fontSize: "14px" }}>
                 Smart Healthcare Management System
               </p>
-              <p className="text-muted mb-0" style={{ fontSize: "15px" }}>
-                Select your access portal to log in to the hospital management system
+              <p className="text-muted mb-0" style={{ fontSize: "13px" }}>
+                Select your portal to log in to the hospital management platform
               </p>
             </div>
 
-            {/* ROLE CARDS GRID */}
-            <div className="row g-4 justify-content-center">
+            {/* COMPACT ROLE CARDS GRID */}
+            <div className="row g-3 justify-content-center">
               {/* DOCTOR CARD */}
-              <div className="col-lg-4 col-md-6">
+              <div className="col-md-4">
                 <div
-                  className="card h-100 border-0 shadow-sm p-4 text-center role-card"
+                  className="card h-100 border-0 p-3 text-center d-flex flex-column justify-content-between"
                   style={{
-                    borderRadius: "18px",
-                    background: "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
-                    border: "1.5px solid #e2e8f0",
+                    borderRadius: "14px",
+                    background: "#f0f9ff",
+                    border: "1px solid #bae6fd",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
                     transition: "transform 0.2s ease, box-shadow 0.2s ease",
                   }}
                 >
-                  <div
-                    style={{
-                      fontSize: "52px",
-                      marginBottom: "15px",
-                    }}
-                  >
-                    👨‍⚕️
-                  </div>
-                  <span
-                    className="badge bg-info text-dark mb-2 mx-auto"
-                    style={{ width: "fit-content", padding: "6px 14px", borderRadius: "20px" }}
-                  >
-                    Medical Staff
-                  </span>
-                  <h3 className="fw-bold mb-2" style={{ color: "#0f172a" }}>
-                    DOCTOR
-                  </h3>
-                  <p className="text-muted small mb-4" style={{ minHeight: "60px" }}>
-                    Manage patient appointments, record clinical consultations, diagnosis logs & digital prescriptions.
-                  </p>
+                  <div>
+                    <div style={{ fontSize: "36px", marginBottom: "8px" }}>👨‍⚕️</div>
+                    <span
+                      className="badge bg-info text-dark mb-2"
+                      style={{ fontSize: "11px", padding: "4px 10px", borderRadius: "12px" }}
+                    >
+                      Medical Staff
+                    </span>
+                    <h5 className="fw-bold mb-1" style={{ color: "#0f172a", fontSize: "19px" }}>
+                      DOCTOR
+                    </h5>
+                    <p className="text-muted mb-3" style={{ fontSize: "12px", lineHeight: "1.4" }}>
+                      Log clinical consultations, vitals, diagnosis & digital prescriptions.
+                    </p>
 
-                  <div className="text-start mb-4 bg-white p-3 rounded-3 border">
-                    <div className="small text-secondary mb-1">✓ Clinical Consultations & Vitals</div>
-                    <div className="small text-secondary mb-1">✓ Patient Medical Profiles</div>
-                    <div className="small text-secondary">✓ Digital Multi-Item Prescriptions</div>
+                    <div className="text-start bg-white p-2 mb-3 rounded-2 border" style={{ fontSize: "11px" }}>
+                      <div className="text-secondary mb-1">✓ Consultations & Vitals Log</div>
+                      <div className="text-secondary mb-1">✓ Patient Medical Profiles</div>
+                      <div className="text-secondary">✓ Multi-Item Prescriptions</div>
+                    </div>
                   </div>
 
                   <button
-                    className="btn btn-primary w-100 fw-bold py-2 mt-auto"
+                    className="btn btn-sm btn-primary w-100 fw-bold py-2"
                     style={{
-                      borderRadius: "12px",
+                      borderRadius: "10px",
                       background: "linear-gradient(135deg, #0284c7, #0369a1)",
                       border: "none",
+                      fontSize: "13px",
                     }}
                     onClick={() => handleSelectRole("DOCTOR")}
                   >
@@ -240,49 +235,46 @@ function Login() {
               </div>
 
               {/* PATIENT CARD */}
-              <div className="col-lg-4 col-md-6">
+              <div className="col-md-4">
                 <div
-                  className="card h-100 border-0 shadow-sm p-4 text-center role-card"
+                  className="card h-100 border-0 p-3 text-center d-flex flex-column justify-content-between"
                   style={{
-                    borderRadius: "18px",
-                    background: "linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%)",
-                    border: "1.5px solid #bbf7d0",
+                    borderRadius: "14px",
+                    background: "#f0fdf4",
+                    border: "1px solid #bbf7d0",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
                     transition: "transform 0.2s ease, box-shadow 0.2s ease",
                   }}
                 >
-                  <div
-                    style={{
-                      fontSize: "52px",
-                      marginBottom: "15px",
-                    }}
-                  >
-                    🧑
-                  </div>
-                  <span
-                    className="badge bg-success mb-2 mx-auto"
-                    style={{ width: "fit-content", padding: "6px 14px", borderRadius: "20px" }}
-                  >
-                    Patient Portal
-                  </span>
-                  <h3 className="fw-bold mb-2" style={{ color: "#0f172a" }}>
-                    PATIENT
-                  </h3>
-                  <p className="text-muted small mb-4" style={{ minHeight: "60px" }}>
-                    Book doctor appointments, check medical prescriptions, view itemized receipts & medication reminders.
-                  </p>
+                  <div>
+                    <div style={{ fontSize: "36px", marginBottom: "8px" }}>🧑</div>
+                    <span
+                      className="badge bg-success mb-2"
+                      style={{ fontSize: "11px", padding: "4px 10px", borderRadius: "12px" }}
+                    >
+                      Patient Portal
+                    </span>
+                    <h5 className="fw-bold mb-1" style={{ color: "#0f172a", fontSize: "19px" }}>
+                      PATIENT
+                    </h5>
+                    <p className="text-muted mb-3" style={{ fontSize: "12px", lineHeight: "1.4" }}>
+                      Book appointments, check prescription history & hospital invoices.
+                    </p>
 
-                  <div className="text-start mb-4 bg-white p-3 rounded-3 border">
-                    <div className="small text-secondary mb-1">✓ Appointment Bookings</div>
-                    <div className="small text-secondary mb-1">✓ Prescription History</div>
-                    <div className="small text-secondary">✓ Billing & Invoice Downloads</div>
+                    <div className="text-start bg-white p-2 mb-3 rounded-2 border" style={{ fontSize: "11px" }}>
+                      <div className="text-secondary mb-1">✓ Doctor Appointments</div>
+                      <div className="text-secondary mb-1">✓ Prescription Records</div>
+                      <div className="text-secondary">✓ Itemized Invoices & Payments</div>
+                    </div>
                   </div>
 
                   <button
-                    className="btn btn-success w-100 fw-bold py-2 mt-auto"
+                    className="btn btn-sm btn-success w-100 fw-bold py-2"
                     style={{
-                      borderRadius: "12px",
+                      borderRadius: "10px",
                       background: "linear-gradient(135deg, #16a34a, #15803d)",
                       border: "none",
+                      fontSize: "13px",
                     }}
                     onClick={() => handleSelectRole("PATIENT")}
                   >
@@ -292,49 +284,46 @@ function Login() {
               </div>
 
               {/* ADMIN CARD */}
-              <div className="col-lg-4 col-md-6">
+              <div className="col-md-4">
                 <div
-                  className="card h-100 border-0 shadow-sm p-4 text-center role-card"
+                  className="card h-100 border-0 p-3 text-center d-flex flex-column justify-content-between"
                   style={{
-                    borderRadius: "18px",
-                    background: "linear-gradient(180deg, #fefce8 0%, #fef9c3 100%)",
-                    border: "1.5px solid #fef08a",
+                    borderRadius: "14px",
+                    background: "#f8fafc",
+                    border: "1px solid #cbd5e1",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
                     transition: "transform 0.2s ease, box-shadow 0.2s ease",
                   }}
                 >
-                  <div
-                    style={{
-                      fontSize: "52px",
-                      marginBottom: "15px",
-                    }}
-                  >
-                    🛡️
-                  </div>
-                  <span
-                    className="badge bg-warning text-dark mb-2 mx-auto"
-                    style={{ width: "fit-content", padding: "6px 14px", borderRadius: "20px" }}
-                  >
-                    System Administration
-                  </span>
-                  <h3 className="fw-bold mb-2" style={{ color: "#0f172a" }}>
-                    ADMIN
-                  </h3>
-                  <p className="text-muted small mb-4" style={{ minHeight: "60px" }}>
-                    Full hospital operations oversight, doctor rosters, inventory dispensing, financial revenue & reports.
-                  </p>
+                  <div>
+                    <div style={{ fontSize: "36px", marginBottom: "8px" }}>🛡️</div>
+                    <span
+                      className="badge bg-dark text-white mb-2"
+                      style={{ fontSize: "11px", padding: "4px 10px", borderRadius: "12px" }}
+                    >
+                      Administrator
+                    </span>
+                    <h5 className="fw-bold mb-1" style={{ color: "#0f172a", fontSize: "19px" }}>
+                      ADMIN
+                    </h5>
+                    <p className="text-muted mb-3" style={{ fontSize: "12px", lineHeight: "1.4" }}>
+                      Full hospital operations oversight, doctor rosters, inventory & revenue.
+                    </p>
 
-                  <div className="text-start mb-4 bg-white p-3 rounded-3 border">
-                    <div className="small text-secondary mb-1">✓ Doctor & Patient Records</div>
-                    <div className="small text-secondary mb-1">✓ Revenue & Financial Analytics</div>
-                    <div className="small text-secondary">✓ Pharmacy Stock & Dispensing</div>
+                    <div className="text-start bg-white p-2 mb-3 rounded-2 border" style={{ fontSize: "11px" }}>
+                      <div className="text-secondary mb-1">✓ Staff & Patient Records</div>
+                      <div className="text-secondary mb-1">✓ Revenue & Financial Charts</div>
+                      <div className="text-secondary">✓ Pharmacy Stock & Dispensing</div>
+                    </div>
                   </div>
 
                   <button
-                    className="btn btn-dark w-100 fw-bold py-2 mt-auto"
+                    className="btn btn-sm btn-dark w-100 fw-bold py-2"
                     style={{
-                      borderRadius: "12px",
+                      borderRadius: "10px",
                       background: "linear-gradient(135deg, #1e293b, #0f172a)",
                       border: "none",
+                      fontSize: "13px",
                     }}
                     onClick={() => handleSelectRole("ADMIN")}
                   >
@@ -344,68 +333,71 @@ function Login() {
               </div>
             </div>
 
-            <div className="text-center mt-5 text-muted small">
-              🔒 Hospital ERP Secure Gateway • Encrypted Access • 24/7 Clinical Support
+            <div className="text-center mt-4 text-muted" style={{ fontSize: "12px" }}>
+              🔒 Hospital ERP Secure Gateway • Encrypted Access
             </div>
           </div>
         ) : (
           /* ============================================================ */
-          /* VIEW 2: ROLE-SPECIFIC LOGIN FORM                             */
+          /* VIEW 2: COMPACT ROLE-SPECIFIC LOGIN FORM                     */
           /* ============================================================ */
-          <div className="p-5">
-            {/* BACK TO ROLE SELECTION BUTTON */}
+          <div className="p-4 p-md-5">
             <button
-              className="btn btn-link text-decoration-none p-0 mb-4 text-secondary"
-              style={{ fontWeight: "600", fontSize: "14px" }}
+              className="btn btn-link text-decoration-none p-0 mb-3 text-secondary"
+              style={{ fontWeight: "600", fontSize: "13px" }}
               onClick={handleBackToRoles}
             >
               ← Back to Portal Selection
             </button>
 
-            {/* PORTAL BADGE & TITLE */}
-            <div className="mb-4">
+            <div className="mb-3">
               <span
                 className={`badge mb-2 ${
                   selectedRole === "DOCTOR"
                     ? "bg-info text-dark"
                     : selectedRole === "PATIENT"
                     ? "bg-success"
-                    : "bg-dark"
+                    : "bg-dark text-white"
                 }`}
-                style={{ fontSize: "12px", padding: "6px 14px", borderRadius: "12px" }}
+                style={{ fontSize: "11px", padding: "5px 12px", borderRadius: "10px" }}
               >
                 {getRoleTitle()}
               </span>
-              <h2 className="fw-bold mb-1" style={{ color: "#0f172a" }}>
+              <h3 className="fw-bold mb-1" style={{ color: "#0f172a", fontSize: "22px" }}>
                 Welcome Back
-              </h2>
-              <p className="text-muted small mb-0">{getRoleDescription()}</p>
+              </h3>
+              <p className="text-muted mb-0" style={{ fontSize: "13px" }}>
+                {getRoleDescription()}
+              </p>
             </div>
 
-            {/* LOGIN FORM */}
             <form onSubmit={handleLogin}>
               <div className="mb-3">
-                <label className="form-label fw-semibold text-secondary">Username</label>
+                <label className="form-label fw-semibold text-secondary" style={{ fontSize: "13px" }}>
+                  Username
+                </label>
                 <input
                   type="text"
-                  className="form-control form-control-lg"
+                  className="form-control"
                   placeholder="Enter your username"
                   value={username}
                   onChange={(e) => {
                     setUsername(e.target.value);
                     setError("");
                   }}
-                  style={{ borderRadius: "12px", fontSize: "15px" }}
+                  style={{ borderRadius: "10px", padding: "10px 14px", fontSize: "14px" }}
                   required
                 />
               </div>
 
               <div className="mb-3">
-                <label className="form-label fw-semibold text-secondary">Password</label>
+                <label className="form-label fw-semibold text-secondary" style={{ fontSize: "13px" }}>
+                  Password
+                </label>
                 <div className="input-group">
                   <input
                     type={showPassword ? "text" : "password"}
-                    className="form-control form-control-lg"
+                    className="form-control"
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => {
@@ -413,9 +405,10 @@ function Login() {
                       setError("");
                     }}
                     style={{
-                      borderTopLeftRadius: "12px",
-                      borderBottomLeftRadius: "12px",
-                      fontSize: "15px",
+                      borderTopLeftRadius: "10px",
+                      borderBottomLeftRadius: "10px",
+                      padding: "10px 14px",
+                      fontSize: "14px",
                     }}
                     required
                   />
@@ -424,8 +417,9 @@ function Login() {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     style={{
-                      borderTopRightRadius: "12px",
-                      borderBottomRightRadius: "12px",
+                      borderTopRightRadius: "10px",
+                      borderBottomRightRadius: "10px",
+                      fontSize: "13px",
                     }}
                   >
                     {showPassword ? "👁️ Hide" : "👁️ Show"}
@@ -433,24 +427,22 @@ function Login() {
                 </div>
               </div>
 
-              {/* ERROR ALERT */}
               {error && (
-                <div className="alert alert-danger py-2 px-3 mb-3 small rounded-3" role="alert">
+                <div className="alert alert-danger py-2 px-3 mb-3 border-0 rounded-2" style={{ fontSize: "13px" }}>
                   ⚠️ {error}
                 </div>
               )}
 
-              {/* SUBMIT BUTTON */}
               <button
                 type="submit"
-                className={`btn w-100 py-3 fw-bold mt-2 ${
+                className={`btn w-100 py-2 fw-bold mt-1 ${
                   selectedRole === "DOCTOR"
                     ? "btn-info text-dark"
                     : selectedRole === "PATIENT"
                     ? "btn-success"
                     : "btn-dark"
                 }`}
-                style={{ borderRadius: "12px", fontSize: "16px" }}
+                style={{ borderRadius: "10px", fontSize: "15px" }}
                 disabled={loading}
               >
                 {loading ? (
@@ -464,23 +456,24 @@ function Login() {
               </button>
             </form>
 
-            <hr className="my-4 text-muted" />
+            <hr className="my-3 text-muted" />
 
-            {/* DYNAMIC REGISTRATION & ACCOUNT PROVISIONING INFO */}
             {selectedRole === "PATIENT" ? (
               <div className="text-center">
-                <p className="text-muted small mb-2">New patient?</p>
+                <p className="text-muted mb-2" style={{ fontSize: "12px" }}>
+                  New patient?
+                </p>
                 <button
                   type="button"
-                  className="btn btn-outline-success w-100 fw-semibold"
-                  style={{ borderRadius: "12px" }}
+                  className="btn btn-outline-success w-100 fw-semibold btn-sm py-2"
+                  style={{ borderRadius: "10px" }}
                   onClick={() => navigate("/register")}
                 >
                   Create Patient Account
                 </button>
               </div>
             ) : (
-              <div className="text-center text-muted small">
+              <div className="text-center text-muted" style={{ fontSize: "12px" }}>
                 ℹ️ Doctor & Admin accounts are provisioned by hospital system administration.
               </div>
             )}
