@@ -10,7 +10,10 @@ function Sidebar() {
     { name: "Appointments", path: "/appointments", icon: "📅" },
     { name: "Medicines", path: "/medicines", icon: "💊" },
     { name: "Prescriptions", path: "/prescriptions", icon: "📋" },
+    { name: "Lab & Diagnostics", path: "/labs", icon: "🧪" },
+    { name: "Admissions & Beds", path: "/admissions", icon: "🛏️" },
     { name: "Billing", path: "/billing", icon: "💳" },
+    { name: "Audit Logs", path: "/audit-logs", icon: "📜" },
   ];
 
   // LOGOUT

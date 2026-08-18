@@ -146,4 +146,20 @@ public class Doctor {
     public void setDepartment(Department department) {
         this.department = department;
     }
+
+    private String doctorCode;
+
+    public String getDoctorCode() {
+        if (doctorCode != null && !doctorCode.trim().isEmpty()) {
+            return doctorCode;
+        }
+        if (id != null) {
+            return String.format("DOC-2026-%06d", id);
+        }
+        return null;
+    }
+
+    public void setDoctorCode(String doctorCode) {
+        this.doctorCode = doctorCode;
+    }
 }

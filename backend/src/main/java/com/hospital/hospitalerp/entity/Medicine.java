@@ -116,6 +116,14 @@ public class Medicine {
         this.stock = stock;
     }
 
+    public Integer getStockQuantity() {
+        return stock != null ? stock : 0;
+    }
+
+    public void setStockQuantity(Integer stockQuantity) {
+        this.stock = stockQuantity;
+    }
+
     public Double getUnitPrice() {
         return unitPrice;
     }

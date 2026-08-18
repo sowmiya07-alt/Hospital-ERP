@@ -127,4 +127,27 @@ public class PrescriptionService {
 public List<Prescription> getPrescriptionsByPatientId(Long patientId) {
     return prescriptionRepository.findByPatientId(patientId);
 }
+
+@org.springframework.transaction.annotation.Transactional
+public Prescription dispensePrescription(Long prescriptionId) {
+    Prescription p = prescriptionRepository.findById(prescriptionId)
+            .orElseThrow(() -> new RuntimeException("Prescription not found"));
+
+    if ("DISPENSED".equalsIgnoreCase(p.getStatus())) {
+        return p;
+    }
+
+    if (p.getMedicine() != null) {
+        Medicine med = p.getMedicine();
+        if (med.getStockQuantity() > 0) {
+            med.setStockQuantity(med.getStockQuantity() - 1);
+            medicineRepository.save(med);
+        } else {
+            throw new RuntimeException("Medicine '" + med.getMedicineName() + "' is out of stock!");
+        }
+    }
+
+    p.setStatus("DISPENSED");
+    return prescriptionRepository.save(p);
+}
 }

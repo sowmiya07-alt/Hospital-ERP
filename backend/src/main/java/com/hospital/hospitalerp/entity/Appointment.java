@@ -84,4 +84,29 @@ public class Appointment {
     public void setStatus(String status) {
         this.status = status;
     }
+
+    private String reason;
+    private String appointmentCode;
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    public String getAppointmentCode() {
+        if (appointmentCode != null && !appointmentCode.trim().isEmpty()) {
+            return appointmentCode;
+        }
+        if (id != null) {
+            return String.format("APT-2026-%06d", id);
+        }
+        return null;
+    }
+
+    public void setAppointmentCode(String appointmentCode) {
+        this.appointmentCode = appointmentCode;
+    }
 }
