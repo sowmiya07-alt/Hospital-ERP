@@ -1,23 +1,40 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { loginUser } from "../services/authService";
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Selected role: null (Role Selection View) or "PATIENT", "DOCTOR", "ADMIN" (Login Form View)
+  // Selected role: null (Role Selection View) or "PATIENT", "DOCTOR", "ADMIN"
   const [selectedRole, setSelectedRole] = useState(null);
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState("Signing you in...");
+
+  useEffect(() => {
+    // Check if coming from registration or URL query param
+    const params = new URLSearchParams(location.search);
+    const roleParam = params.get("role");
+    const registered = params.get("registered");
+
+    if (roleParam === "PATIENT" || roleParam === "DOCTOR" || roleParam === "ADMIN") {
+      setSelectedRole(roleParam);
+    }
+    if (registered === "true") {
+      setSuccess("Patient account created successfully! Please sign in with your credentials.");
+    }
+  }, [location]);
 
   const handleSelectRole = (role) => {
     setSelectedRole(role);
     setError("");
+    setSuccess("");
     setUsername("");
     setPassword("");
   };
@@ -25,6 +42,7 @@ function Login() {
   const handleBackToRoles = () => {
     setSelectedRole(null);
     setError("");
+    setSuccess("");
     setUsername("");
     setPassword("");
   };
@@ -33,13 +51,14 @@ function Login() {
     e.preventDefault();
 
     if (!username.trim() || !password) {
-      setError("Please enter username and password");
+      setError("Please enter username and password.");
       return;
     }
 
     setLoading(true);
     setLoadingMsg("Connecting to hospital server...");
     setError("");
+    setSuccess("");
 
     try {
       const response = await loginUser({
@@ -51,11 +70,11 @@ function Login() {
       const data = response.data;
 
       if (!data.success) {
-        setError(data.message || "Invalid username or password");
+        setError(data.message || "Invalid username or password.");
         return;
       }
 
-      // Role mismatch check if specific role selected
+      // Check role alignment
       if (selectedRole && data.role !== selectedRole) {
         setError(
           `This account is registered as ${data.role}. Please select the ${data.role} Portal to sign in.`
@@ -63,7 +82,7 @@ function Login() {
         return;
       }
 
-      // Store authentication data
+      // Store authentication tokens & state
       localStorage.clear();
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("username", data.username);
@@ -97,7 +116,7 @@ function Login() {
       }
 
       localStorage.clear();
-      setError("Invalid user role assigned to this account.");
+      setError("You do not have permission to access this portal.");
     } catch (err) {
       console.log("Login Error:", err);
       setError(
@@ -107,23 +126,6 @@ function Login() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getRoleTitle = () => {
-    if (selectedRole === "DOCTOR") return "DOCTOR PORTAL";
-    if (selectedRole === "PATIENT") return "PATIENT PORTAL";
-    if (selectedRole === "ADMIN") return "ADMINISTRATOR PORTAL";
-    return "HOSPITAL PORTAL";
-  };
-
-  const getRoleDescription = () => {
-    if (selectedRole === "DOCTOR")
-      return "Access patient charts, log clinical vitals, manage appointments & create multi-item prescriptions.";
-    if (selectedRole === "PATIENT")
-      return "View your medical history, check upcoming appointments, track prescriptions & pay hospital invoices.";
-    if (selectedRole === "ADMIN")
-      return "Manage hospital operations, doctors, patients, inventory stock, revenue analytics & system config.";
-    return "Sign in to access your hospital account.";
   };
 
   return (
@@ -150,7 +152,7 @@ function Login() {
         }}
       >
         {/* ============================================================ */}
-        {/* VIEW 1: COMPACT & ATTRACTIVE ROLE SELECTION LANDING PAGE    */}
+        {/* VIEW 1: ROLE SELECTION LANDING PAGE                           */}
         {/* ============================================================ */}
         {selectedRole === null ? (
           <div className="p-4 p-md-5">
@@ -165,57 +167,74 @@ function Login() {
                   height: "56px",
                   background: "#ccfbf1",
                   borderRadius: "14px",
-                  fontSize: "30px",
+                  color: "#0d9488",
                   marginBottom: "10px",
                   boxShadow: "0 4px 12px rgba(13, 148, 136, 0.15)",
                 }}
               >
-                🏥
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                  <path d="M12 5v16"/>
+                  <path d="M5 12h14"/>
+                </svg>
               </div>
               <h2 className="fw-bold mb-1" style={{ color: "#0f172a", fontSize: "26px", letterSpacing: "-0.5px" }}>
                 Hospital ERP
               </h2>
-              <p className="text-teal fw-semibold mb-1" style={{ color: "#0d9488", fontSize: "14px" }}>
+              <p className="fw-semibold mb-1" style={{ color: "#0d9488", fontSize: "14px" }}>
                 Smart Healthcare Management System
               </p>
               <p className="text-muted mb-0" style={{ fontSize: "13px" }}>
-                Select your portal to log in to the hospital management platform
+                Select your hospital portal to log in
               </p>
             </div>
 
-            {/* COMPACT ROLE CARDS GRID */}
+            {/* ROLE CARDS GRID */}
             <div className="row g-3 justify-content-center">
-              {/* DOCTOR CARD */}
+              {/* DOCTOR CARD (Professional Blue) */}
               <div className="col-md-4">
                 <div
                   className="card h-100 border-0 p-3 text-center d-flex flex-column justify-content-between"
                   style={{
                     borderRadius: "14px",
                     background: "#f0f9ff",
-                    border: "1px solid #bae6fd",
-                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
-                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                    border: "1.5px solid #bae6fd",
+                    boxShadow: "0 4px 6px -1px rgba(2, 132, 199, 0.08)",
                   }}
                 >
                   <div>
-                    <div style={{ fontSize: "36px", marginBottom: "8px" }}>👨‍⚕️</div>
-                    <span
-                      className="badge bg-info text-dark mb-2"
-                      style={{ fontSize: "11px", padding: "4px 10px", borderRadius: "12px" }}
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "48px",
+                        height: "48px",
+                        background: "#e0f2fe",
+                        color: "#0284c7",
+                        borderRadius: "12px",
+                        marginBottom: "10px",
+                      }}
                     >
-                      Medical Staff
-                    </span>
-                    <h5 className="fw-bold mb-1" style={{ color: "#0f172a", fontSize: "19px" }}>
+                      {/* Stethoscope Icon */}
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4.8 2.3A.3.3 0 0 0 4.5 2h-1a.5.5 0 0 0-.5.5V9a6 6 0 0 0 12 0V2.5a.5.5 0 0 0-.5-.5h-1a.3.3 0 0 0-.3.3v6.7a4 4 0 0 1-8 0V2.3z"/>
+                        <path d="M9 15v2a5 5 0 0 0 10 0v-2"/>
+                        <circle cx="19" cy="13" r="2"/>
+                      </svg>
+                    </div>
+
+                    <h5 className="fw-bold mb-1" style={{ color: "#0369a1", fontSize: "18px" }}>
                       DOCTOR
                     </h5>
                     <p className="text-muted mb-3" style={{ fontSize: "12px", lineHeight: "1.4" }}>
-                      Log clinical consultations, vitals, diagnosis & digital prescriptions.
+                      Manage consultations, patient records, appointments and prescriptions.
                     </p>
 
                     <div className="text-start bg-white p-2 mb-3 rounded-2 border" style={{ fontSize: "11px" }}>
-                      <div className="text-secondary mb-1">✓ Consultations & Vitals Log</div>
+                      <div className="text-secondary mb-1">✓ Consultations</div>
                       <div className="text-secondary mb-1">✓ Patient Medical Profiles</div>
-                      <div className="text-secondary">✓ Multi-Item Prescriptions</div>
+                      <div className="text-secondary">✓ Digital Prescriptions</div>
                     </div>
                   </div>
 
@@ -229,42 +248,54 @@ function Login() {
                     }}
                     onClick={() => handleSelectRole("DOCTOR")}
                   >
-                    Doctor Sign In →
+                    Continue as Doctor →
                   </button>
                 </div>
               </div>
 
-              {/* PATIENT CARD */}
+              {/* PATIENT CARD (Professional Green) */}
               <div className="col-md-4">
                 <div
                   className="card h-100 border-0 p-3 text-center d-flex flex-column justify-content-between"
                   style={{
                     borderRadius: "14px",
                     background: "#f0fdf4",
-                    border: "1px solid #bbf7d0",
-                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
-                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                    border: "1.5px solid #bbf7d0",
+                    boxShadow: "0 4px 6px -1px rgba(22, 163, 74, 0.08)",
                   }}
                 >
                   <div>
-                    <div style={{ fontSize: "36px", marginBottom: "8px" }}>🧑</div>
-                    <span
-                      className="badge bg-success mb-2"
-                      style={{ fontSize: "11px", padding: "4px 10px", borderRadius: "12px" }}
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "48px",
+                        height: "48px",
+                        background: "#dcfce7",
+                        color: "#16a34a",
+                        borderRadius: "12px",
+                        marginBottom: "10px",
+                      }}
                     >
-                      Patient Portal
-                    </span>
-                    <h5 className="fw-bold mb-1" style={{ color: "#0f172a", fontSize: "19px" }}>
+                      {/* Patient/User Heart Icon */}
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                      </svg>
+                    </div>
+
+                    <h5 className="fw-bold mb-1" style={{ color: "#15803d", fontSize: "18px" }}>
                       PATIENT
                     </h5>
                     <p className="text-muted mb-3" style={{ fontSize: "12px", lineHeight: "1.4" }}>
-                      Book appointments, check prescription history & hospital invoices.
+                      Manage appointments, prescriptions, medical records and bills.
                     </p>
 
                     <div className="text-start bg-white p-2 mb-3 rounded-2 border" style={{ fontSize: "11px" }}>
                       <div className="text-secondary mb-1">✓ Doctor Appointments</div>
-                      <div className="text-secondary mb-1">✓ Prescription Records</div>
-                      <div className="text-secondary">✓ Itemized Invoices & Payments</div>
+                      <div className="text-secondary mb-1">✓ Prescription History</div>
+                      <div className="text-secondary">✓ Bills & Payments</div>
                     </div>
                   </div>
 
@@ -278,42 +309,53 @@ function Login() {
                     }}
                     onClick={() => handleSelectRole("PATIENT")}
                   >
-                    Patient Sign In →
+                    Continue as Patient →
                   </button>
                 </div>
               </div>
 
-              {/* ADMIN CARD */}
+              {/* ADMIN CARD (Professional Navy/Dark) */}
               <div className="col-md-4">
                 <div
                   className="card h-100 border-0 p-3 text-center d-flex flex-column justify-content-between"
                   style={{
                     borderRadius: "14px",
                     background: "#f8fafc",
-                    border: "1px solid #cbd5e1",
-                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
-                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                    border: "1.5px solid #cbd5e1",
+                    boxShadow: "0 4px 6px -1px rgba(15, 23, 42, 0.08)",
                   }}
                 >
                   <div>
-                    <div style={{ fontSize: "36px", marginBottom: "8px" }}>🛡️</div>
-                    <span
-                      className="badge bg-dark text-white mb-2"
-                      style={{ fontSize: "11px", padding: "4px 10px", borderRadius: "12px" }}
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "48px",
+                        height: "48px",
+                        background: "#e2e8f0",
+                        color: "#1e293b",
+                        borderRadius: "12px",
+                        marginBottom: "10px",
+                      }}
                     >
-                      Administrator
-                    </span>
-                    <h5 className="fw-bold mb-1" style={{ color: "#0f172a", fontSize: "19px" }}>
+                      {/* Shield Administration Icon */}
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                      </svg>
+                    </div>
+
+                    <h5 className="fw-bold mb-1" style={{ color: "#0f172a", fontSize: "18px" }}>
                       ADMIN
                     </h5>
                     <p className="text-muted mb-3" style={{ fontSize: "12px", lineHeight: "1.4" }}>
-                      Full hospital operations oversight, doctor rosters, inventory & revenue.
+                      Manage hospital operations, users, inventory, billing and reports.
                     </p>
 
                     <div className="text-start bg-white p-2 mb-3 rounded-2 border" style={{ fontSize: "11px" }}>
-                      <div className="text-secondary mb-1">✓ Staff & Patient Records</div>
-                      <div className="text-secondary mb-1">✓ Revenue & Financial Charts</div>
-                      <div className="text-secondary">✓ Pharmacy Stock & Dispensing</div>
+                      <div className="text-secondary mb-1">✓ Patient & Staff Management</div>
+                      <div className="text-secondary mb-1">✓ Revenue & Reports</div>
+                      <div className="text-secondary">✓ Pharmacy & Inventory</div>
                     </div>
                   </div>
 
@@ -327,7 +369,7 @@ function Login() {
                     }}
                     onClick={() => handleSelectRole("ADMIN")}
                   >
-                    Admin Sign In →
+                    Continue as Admin →
                   </button>
                 </div>
               </div>
@@ -339,7 +381,7 @@ function Login() {
           </div>
         ) : (
           /* ============================================================ */
-          /* VIEW 2: COMPACT ROLE-SPECIFIC LOGIN FORM                     */
+          /* VIEW 2: ROLE-SPECIFIC AUTHENTICATION                         */
           /* ============================================================ */
           <div className="p-4 p-md-5">
             <button
@@ -347,7 +389,7 @@ function Login() {
               style={{ fontWeight: "600", fontSize: "13px" }}
               onClick={handleBackToRoles}
             >
-              ← Back to Portal Selection
+              ← Back to portal selection
             </button>
 
             <div className="mb-3">
@@ -356,20 +398,38 @@ function Login() {
                   selectedRole === "DOCTOR"
                     ? "bg-info text-dark"
                     : selectedRole === "PATIENT"
-                    ? "bg-success"
+                    ? "bg-success text-white"
                     : "bg-dark text-white"
                 }`}
                 style={{ fontSize: "11px", padding: "5px 12px", borderRadius: "10px" }}
               >
-                {getRoleTitle()}
+                {selectedRole} PORTAL
               </span>
               <h3 className="fw-bold mb-1" style={{ color: "#0f172a", fontSize: "22px" }}>
-                Welcome Back
+                {selectedRole === "DOCTOR"
+                  ? "DOCTOR SIGN IN"
+                  : selectedRole === "PATIENT"
+                  ? "PATIENT SIGN IN"
+                  : "ADMIN SIGN IN"}
               </h3>
               <p className="text-muted mb-0" style={{ fontSize: "13px" }}>
-                {getRoleDescription()}
+                Enter your credentials to access the {selectedRole.toLowerCase()} portal
               </p>
             </div>
+
+            {/* SUCCESS NOTIFICATION */}
+            {success && (
+              <div className="alert alert-success py-2 px-3 mb-3 border-0 rounded-2" style={{ fontSize: "13px" }}>
+                ✅ {success}
+              </div>
+            )}
+
+            {/* ERROR NOTIFICATION */}
+            {error && (
+              <div className="alert alert-danger py-2 px-3 mb-3 border-0 rounded-2" style={{ fontSize: "13px" }}>
+                ⚠️ {error}
+              </div>
+            )}
 
             <form onSubmit={handleLogin}>
               <div className="mb-3">
@@ -384,6 +444,7 @@ function Login() {
                   onChange={(e) => {
                     setUsername(e.target.value);
                     setError("");
+                    setSuccess("");
                   }}
                   style={{ borderRadius: "10px", padding: "10px 14px", fontSize: "14px" }}
                   required
@@ -403,6 +464,7 @@ function Login() {
                     onChange={(e) => {
                       setPassword(e.target.value);
                       setError("");
+                      setSuccess("");
                     }}
                     style={{
                       borderTopLeftRadius: "10px",
@@ -427,17 +489,11 @@ function Login() {
                 </div>
               </div>
 
-              {error && (
-                <div className="alert alert-danger py-2 px-3 mb-3 border-0 rounded-2" style={{ fontSize: "13px" }}>
-                  ⚠️ {error}
-                </div>
-              )}
-
               <button
                 type="submit"
                 className={`btn w-100 py-2 fw-bold mt-1 ${
                   selectedRole === "DOCTOR"
-                    ? "btn-info text-dark"
+                    ? "btn-primary"
                     : selectedRole === "PATIENT"
                     ? "btn-success"
                     : "btn-dark"
@@ -451,7 +507,7 @@ function Login() {
                     {loadingMsg}
                   </>
                 ) : (
-                  `Sign In to ${selectedRole}`
+                  "Sign In"
                 )}
               </button>
             </form>
@@ -474,7 +530,7 @@ function Login() {
               </div>
             ) : (
               <div className="text-center text-muted" style={{ fontSize: "12px" }}>
-                ℹ️ Doctor & Admin accounts are provisioned by hospital system administration.
+                ℹ️ Doctor and Administrator accounts are provisioned by hospital system administration.
               </div>
             )}
           </div>

@@ -108,10 +108,9 @@ function Register() {
           confirmPassword: "",
         });
 
-        // Redirect to login after a short delay
         setTimeout(() => {
-          navigate("/");
-        }, 2000);
+          navigate("/?role=PATIENT&registered=true");
+        }, 1200);
       } else {
         setError(
           response.data.message ||
