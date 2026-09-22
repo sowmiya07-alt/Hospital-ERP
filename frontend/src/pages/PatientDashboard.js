@@ -44,6 +44,7 @@ function PatientDashboard() {
   const [alarmTimes, setAlarmTimes] = useState({});
   const [alarmLoadingId, setAlarmLoadingId] = useState(null);
   const [alarmError, setAlarmError] = useState("");
+  const [activeNotifications, setActiveNotifications] = useState([]);
 
   const [loadingAppointments, setLoadingAppointments] =
     useState(true);
@@ -148,17 +149,30 @@ function PatientDashboard() {
         const dosage =
           alarm.prescription?.dosage || "";
 
-        alert(
-          `💊 MEDICATION REMINDER\n\n` +
-          `Time to take: ${medicineName}\n` +
-          `${dosage ? `Dosage: ${dosage}\n` : ""}` +
-          `Time: ${alarm.alarmTime}`
-        );
+        setActiveNotifications((prev) => [
+          ...prev,
+          {
+            id: reminderKey,
+            medicine: medicineName,
+            dosage: dosage,
+            time: alarm.alarmTime,
+          },
+        ]);
+
+        // Play an alert sound
+        try {
+          const audio = new Audio("https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3?filename=message-incoming-132126.mp3");
+          audio.play().catch(e => console.log("Audio play blocked", e));
+        } catch(e) {}
       });
     }, 10000);
 
     return () => clearInterval(interval);
   }, [medicationAlarms]);
+
+  const dismissNotification = (id) => {
+    setActiveNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
 
   // ==========================================
   // LOAD APPOINTMENTS
@@ -633,6 +647,51 @@ function PatientDashboard() {
         background: "#f4f6f8",
       }}
     >
+      {/* ALARM NOTIFICATIONS OVERLAY */}
+      <div
+        style={{
+          position: "fixed",
+          top: "80px",
+          right: "20px",
+          zIndex: 9999,
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+        }}
+      >
+        {activeNotifications.map((notification) => (
+          <div
+            key={notification.id}
+            className="alert alert-warning alert-dismissible fade show shadow border-warning"
+            role="alert"
+            style={{ minWidth: "300px" }}
+          >
+            <h5 className="alert-heading mb-2">
+              <span style={{ fontSize: "1.2rem", marginRight: "8px" }}>⏰</span>
+              <strong>Medication Reminder</strong>
+            </h5>
+            <p className="mb-1">
+              Time to take: <strong>{notification.medicine}</strong>
+            </p>
+            {notification.dosage && (
+              <p className="mb-1">
+                Dosage: <strong>{notification.dosage}</strong>
+              </p>
+            )}
+            <hr className="my-2" />
+            <p className="mb-0 text-muted small">
+              Scheduled Time: {notification.time}
+            </p>
+            <button
+              type="button"
+              className="btn-close"
+              onClick={() => dismissNotification(notification.id)}
+              aria-label="Close"
+            ></button>
+          </div>
+        ))}
+      </div>
+
       {/* HEADER */}
 
       <nav className="navbar navbar-dark bg-dark px-4">
